@@ -1,0 +1,180 @@
+---
+title: "Week 01 Research Report"
+subtitle: "Earth Embedding Benchmarks for Geospatial Prediction"
+author: "Andrés Padrón Quintana"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+fontsize: 11pt
+geometry: margin=1in
+header-includes:
+  - \usepackage{graphicx}
+  - \usepackage{booktabs}
+  - \usepackage{float}
+---
+
+\vspace{1cm}
+
+Research Stay 2026
+
+Washington University in St. Louis
+
+Montgomery Lab \& Multimodal Vision Research Lab (MVRL)
+
+\vspace{1cm}
+
+Andrés Padrón Quintana
+
+M.Sc. in Data Science
+
+Instituto Tecnológico Autónomo de México (ITAM)
+
+\vfill
+
+# Introduction
+
+This report summarizes the activities carried out during the first week of the research stay *Earth Embedding Benchmarks for Geospatial Prediction*, conducted in collaboration with the Montgomery Lab and the Multimodal Vision Research Laboratory (MVRL) at Washington University in St. Louis.
+
+The primary objective of this week was to establish a solid conceptual foundation on Earth Embeddings, Geospatial Foundation Models, and their application to spatial prediction tasks. To achieve this, the initial work focused on studying the literature that motivates the use of learned geospatial representations, with particular emphasis on the papers *Earth Embeddings: Towards AI-Centric Representations of Our Planet* (Klemmer et al., 2025) and *AlphaEarth Foundations* (Brown et al., 2025).
+
+This report reviews the fundamental concepts introduced in these works, including the definition of Earth Embeddings, their advantages over raw satellite imagery, the four key functions proposed by Klemmer et al. (compression, fusion, interpolation, and interoperability), and the AlphaEarth framework. Additionally, it discusses how Earth Embeddings can be used as inputs for downstream prediction models and examines the types of outcomes for which these representations tend to perform well or poorly.
+
+The material presented here serves as the foundation for subsequent stages of the project, which will involve benchmarking multiple Earth Embedding models, evaluating their predictive performance across geospatial tasks, and studying their ability to generalize across regions and application domains.
+
+# Executive Summary
+
+## What is an Earth Embedding and where does it come from?
+
+An Earth Embedding is a compact numerical representation of a geographic location that summarizes information captured from multiple Earth observation data sources. Similar to word embeddings in Natural Language Processing, Earth embeddings transform complex, high-dimensional observations into a low-dimensional vector that can be used for downstream machine learning tasks.
+
+Rather than working directly with raw satellite imagery, which may contain hundreds of thousands of pixel values and multiple spectral bands, an embedding encodes the most relevant information into a fixed-length vector representation.
+
+Earth embeddings are generated using foundation models trained on large-scale geospatial datasets. In the case of AlphaEarth Foundations, embeddings are learned from multiple modalities, including:
+
+- Sentinel-1 radar imagery
+- Sentinel-2 optical imagery
+- Landsat observations
+- GEDI LiDAR measurements
+- ERA5 climate data
+- GRACE terrestrial water observations
+- Open Buildings datasets
+- Geographic and contextual information
+
+Through self-supervised learning, the model learns latent representations that capture spatial, temporal, and environmental characteristics of locations around the world.
+
+## Why are Earth Embeddings useful compared to raw satellite imagery?
+
+Raw satellite imagery contains a massive amount of information distributed across pixels, spectral bands, and time periods. While highly informative, these data are computationally expensive to store, process, and analyze.
+
+Earth embeddings address this challenge by compressing the original observations into a compact vector representation while preserving the most relevant information for predictive tasks.
+
+Compared to raw imagery, embeddings offer several advantages:
+
+- Lower dimensionality
+- Reduced computational cost
+- Easier integration with tabular datasets
+- Improved transferability across tasks
+- Faster model development
+
+As a result, Earth embeddings enable researchers to leverage information from remote sensing data without requiring direct access to large satellite image collections during model training.
+
+## The Four Functions of Earth Embeddings
+
+Klemmer et al. (2025) identify four fundamental functions that make Earth embeddings useful for geospatial machine learning applications.
+
+### Compression
+
+Earth embeddings compress large amounts of geospatial information into a small vector representation.
+
+Instead of storing thousands of satellite observations, spectral bands, and temporal measurements, a model summarizes the most relevant information into a fixed-dimensional embedding.
+
+**Example** Suppose we have five years of Sentinel-2 imagery for a municipality. The raw dataset may contain millions of pixel values across multiple spectral bands. An Earth embedding compresses all this information into a 64-dimensional vector that can be used directly as input for a machine learning model predicting poverty levels.
+
+### Fusion
+
+Embeddings combine information from multiple heterogeneous data sources into a unified representation.
+
+Rather than analyzing each data source separately, the model learns a common latent representation that integrates information from all available modalities.
+
+**Example** An AlphaEarth embedding may simultaneously incorporate:
+
+- Sentinel-1 radar observations
+- Sentinel-2 optical imagery
+- Climate variables from ERA5
+- Elevation data
+- GEDI LiDAR measurements
+
+As a result, a single embedding vector captures information about vegetation, precipitation, topography, and human activity at the same location.
+
+
+### Interpolation
+
+Embeddings capture spatial and temporal patterns that allow information to be transferred across locations with limited observations.
+
+Because similar places tend to have similar embeddings, models can make useful predictions even where labeled data are scarce.
+
+**Example** Imagine a rural region where no recent household survey has been conducted. If nearby regions with similar environmental and land-use characteristics have known poverty levels, the embedding space may allow a model to infer likely poverty conditions for the unlabeled region.
+
+This is particularly valuable in low-resource settings where census and survey data are infrequent.
+
+
+### Interoperability
+
+Embeddings provide a common representation that allows different datasets to work together.
+
+Since all locations are represented using the same embedding format, data from different domains can be integrated more easily.
+
+**Example** A researcher may combine:
+
+- Census data
+- Health outcomes
+- Agricultural statistics
+- Environmental indicators
+
+using the same Earth embeddings as a common geographic key. This enables joint analyses that would otherwise require extensive preprocessing and feature engineering across multiple datasets.
+
+
+In summary, Earth embeddings act as a compact, multimodal, transferable representation of geographic locations. Through compression, fusion, interpolation, and interoperability, they simplify the use of Earth observation data for a wide range of scientific and societal applications.
+
+## AlphaEarth Foundations and GSED
+
+AlphaEarth Foundations is a geospatial foundation model developed by Google DeepMind to generate universal representations of the Earth's surface.
+
+The model produces embeddings with 64 dimensions that summarize information from multiple Earth observation data sources.
+
+These embeddings are distributed through the Google Satellite Embedding Dataset (GSED) and can be accessed through Google Earth Engine (GEE).
+
+Key characteristics include:
+
+- Embedding dimension: 64
+- Spatial resolution: approximately 10 meters
+- Global coverage
+- Multi-modal Earth observation inputs
+- Designed for transfer learning across many downstream tasks
+
+Instead of downloading and processing raw imagery, users can directly query embedding vectors for a location and use them as predictive features.
+
+## How are embeddings used to predict an outcome?
+
+Earth embeddings can be used as input features for supervised machine learning models.
+
+The typical workflow consists of the following steps:
+
+1. Select a geographic unit of analysis (e.g., municipality, census tract, grid cell).
+2. Extract Earth embeddings for the corresponding locations.
+3. Aggregate embeddings if necessary.
+4. Merge embeddings with outcome data.
+5. Train a predictive model.
+6. Generate predictions.
+
+The resulting dataset may look as follows:
+
+| Region | z1 | z2 | ... | z64 | Outcome |
+|----------|----|----|-----|-----|----------|
+| A | ... | ... | ... | ... | Poverty |
+| B | ... | ... | ... | ... | Poverty |
+
+Machine learning algorithms such as Random Forests, XGBoost, Ridge Regression, or Neural Networks can then learn a mapping between the embedding space and the target outcome.
+

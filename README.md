@@ -40,6 +40,7 @@ The project focuses on benchmarking and comparing models such as:
 ```text
 .
 ├── data/
+├── docs/
 ├── notebooks/
 ├── notes/
 ├── papers/
