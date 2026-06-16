@@ -1,0 +1,230 @@
+---
+title: "Earth Embedding Benchmarks for Geospatial Prediction"
+subtitle: "Reporte de Estancia de Investigación"
+author: "Andrés Padrón Quintana"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    latex_engine: xelatex
+
+fontsize: 11pt
+geometry: margin=1in
+lang: es
+---
+
+# Contexto de la organización
+
+La presente estancia de investigación se desarrolla bajo la supervisión del Mtro. Carlos López de la Cerda, estudiante de doctorado de la Division of Computational & Data Sciences de Washington University in St. Louis, adscrito al Montgomery Lab y al Multimodal Vision Research Laboratory (MVRL).
+
+Washington University in St. Louis es una universidad de investigación reconocida internacionalmente por sus contribuciones en ciencia de datos, inteligencia artificial, visión computacional y aprendizaje automático. Dentro de esta institución, diversos grupos de investigación trabajan en el desarrollo de nuevas metodologías para el análisis de información compleja proveniente de dominios científicos, sociales y ambientales.
+
+La estancia forma parte del proyecto de investigación *Earth Embedding Benchmarks for Geospatial Prediction*, cuyo objetivo general es estudiar metodologías modernas de representación geoespacial mediante inteligencia artificial y evaluar su utilidad en tareas de predicción sobre unidades geográficas.
+
+El proyecto se desarrolla en el contexto del creciente interés por los modelos fundacionales aplicados a observación terrestre, una línea de investigación que combina sensores remotos, aprendizaje profundo y análisis geoespacial para construir representaciones más eficientes de la superficie terrestre.
+
+Dentro de este marco, la estancia tiene como propósito fortalecer la comprensión teórica y práctica de estas tecnologías, así como participar en el estudio comparativo de distintos modelos modernos de representación geoespacial.
+
+# Descripción del problema
+
+Durante las últimas décadas, la disponibilidad de datos de observación terrestre ha crecido de manera exponencial gracias a programas satelitales como Landsat, Sentinel-1 y Sentinel-2. Estos sistemas generan continuamente información sobre la superficie terrestre, permitiendo monitorear fenómenos relacionados con urbanización, infraestructura, agricultura, cobertura vegetal, recursos hídricos y actividad humana.
+
+A pesar de la enorme cantidad de información disponible, el aprovechamiento efectivo de estos datos continúa representando un desafío importante. Las imágenes satelitales suelen tener una alta dimensionalidad, múltiples bandas espectrales y grandes volúmenes de almacenamiento, lo que dificulta su utilización directa en modelos estadísticos y de aprendizaje automático.
+
+Tradicionalmente, los investigadores han abordado este problema mediante la construcción manual de variables derivadas. Por ejemplo, es común utilizar índices de vegetación, medidas de luminosidad nocturna, métricas de urbanización o características espaciales diseñadas específicamente para cada aplicación. Sin embargo, estos enfoques requieren conocimiento especializado del dominio, son difíciles de generalizar y suelen demandar un esfuerzo considerable de ingeniería de variables.
+
+Recientemente, los avances en aprendizaje profundo han dado origen a una nueva generación de modelos capaces de aprender representaciones geoespaciales de manera automática. En lugar de diseñar manualmente características para cada problema, estos modelos buscan extraer información relevante directamente a partir de observaciones de la superficie terrestre y condensarla en representaciones compactas que puedan reutilizarse en múltiples tareas.
+
+No obstante, debido a que se trata de un área de investigación relativamente reciente, aún existen diversas preguntas abiertas. Entre ellas destacan la comparación entre diferentes modelos de representación geoespacial, la capacidad de generalización de los *embeddings* aprendidos y su utilidad para tareas predictivas en distintos contextos geográficos.
+
+Por esta razón, resulta necesario estudiar sistemáticamente las metodologías modernas de representación geoespacial y evaluar su desempeño bajo condiciones comparables, con el objetivo de comprender mejor sus fortalezas, limitaciones y posibles aplicaciones.
+
+# Objetivos
+
+## Objetivo general
+
+Estudiar los fundamentos teóricos y prácticos de los *Earth Embeddings* modernos, así como evaluar comparativamente distintos modelos fundacionales geoespaciales para comprender su capacidad de representar información relevante de la superficie terrestre y su utilidad en tareas de predicción geoespacial.
+
+## Objetivos específicos
+
+- Comprender los principios fundamentales de observación terrestre (*Earth Observation*) y su relación con los modelos modernos de representación geoespacial.
+
+- Estudiar los conceptos teóricos que sustentan los *Earth Embeddings*, incluyendo aprendizaje auto-supervisado, aprendizaje de representaciones y modelos fundacionales.
+
+- Analizar el funcionamiento de arquitecturas utilizadas en modelos geoespaciales modernos, particularmente *Vision Transformers* (ViT) y *Masked Autoencoders* (MAE).
+
+- Investigar las características, diferencias y aplicaciones de modelos fundacionales relevantes como *AlphaEarth*, *Clay*, *Prithvi*, *SatCLIP* y *GeoCLIP*.
+
+- Comprender el proceso mediante el cual observaciones satelitales son transformadas en representaciones vectoriales compactas.
+
+- Explorar el uso de *Google Earth Engine* como plataforma para consulta, visualización y procesamiento de *Earth Embeddings*.
+
+- Replicar y analizar *benchmarks* reportados en la literatura reciente para evaluar el desempeño de distintos modelos de representación geoespacial.
+
+- Desarrollar *pipelines* reproducibles para la extracción, integración y análisis de *embeddings* geoespaciales.
+
+- Evaluar el potencial de los *Earth Embeddings* para tareas de predicción relacionadas con variables urbanas, socioeconómicas y de seguridad pública.
+
+- Documentar los hallazgos obtenidos durante la estancia y generar una comprensión integral del estado actual de los modelos fundacionales geoespaciales.
+
+# Situación actual
+
+Durante los últimos años, los avances en aprendizaje profundo han impulsado el desarrollo de modelos fundacionales capaces de aprender representaciones generales a partir de grandes volúmenes de datos. Este paradigma ha transformado áreas como procesamiento de lenguaje natural, visión computacional y, más recientemente, observación terrestre.
+
+En el contexto geoespacial, estos avances han dado origen a los llamados *Earth Embeddings*, representaciones vectoriales que buscan resumir información relevante sobre una ubicación geográfica dentro de un espacio de baja dimensión. En lugar de trabajar directamente con imágenes satelitales, sensores remotos o variables ambientales de alta dimensionalidad, los investigadores pueden utilizar estos *embeddings* como variables de entrada para tareas de predicción, clasificación o análisis espacial.
+
+La investigación en *Earth Embeddings* ha crecido rápidamente durante los últimos años. Diversos trabajos han propuesto modelos capaces de aprender representaciones geoespaciales a partir de imágenes satelitales, datos climáticos, sensores remotos y coordenadas geográficas. Entre los modelos más relevantes destacan *MOSAIKS*, *SatCLIP*, *GeoCLIP*, *Clay*, *Prithvi* y *AlphaEarth Foundations*.
+
+Aunque estos modelos comparten el objetivo general de representar información geoespacial mediante vectores compactos, difieren en aspectos importantes como la arquitectura utilizada, las fuentes de datos empleadas durante el entrenamiento, la dimensionalidad de los *embeddings* y la estrategia de aprendizaje implementada. Como consecuencia, todavía existe evidencia limitada acerca de cuáles modelos resultan más adecuados para distintos tipos de problemas.
+
+En este contexto, han surgido trabajos recientes que buscan comparar sistemáticamente diferentes modelos de *Earth Embeddings* mediante *benchmarks* geoespaciales. Estos estudios permiten evaluar qué tan bien las representaciones aprendidas capturan información relacionada con fenómenos urbanos, ambientales, económicos y sociales.
+
+La disponibilidad pública de modelos como *AlphaEarth* a través de *Google Earth Engine* representa una oportunidad importante para investigadores y científicos de datos, ya que permite utilizar representaciones geoespaciales avanzadas sin necesidad de entrenar modelos fundacionales desde cero.
+
+# Planteamiento del problema desde la perspectiva de ciencia de datos
+
+Desde la perspectiva de ciencia de datos, el problema central puede entenderse como una tarea de representación.
+
+Sea una ubicación geográfica determinada para la cual se dispone de observaciones provenientes de imágenes satelitales, sensores remotos, variables climáticas u otras fuentes de información geoespacial. Estas observaciones pueden representarse mediante un conjunto de datos de alta dimensionalidad:
+
+$$
+X_i
+$$
+
+donde $X_i$ contiene la información observada para la ubicación $i$.
+
+El objetivo consiste en aprender una función:
+
+$$
+f(X_i) = z_i
+$$
+
+capaz de transformar estas observaciones complejas en una representación vectorial compacta:
+
+$$
+z_i \in \mathbb{R}^{d}
+$$
+
+donde $d$ corresponde a la dimensión del *embedding*.
+
+Idealmente, el *embedding* debe conservar la mayor cantidad posible de información relevante sobre la ubicación geográfica original, permitiendo que posteriormente pueda utilizarse para resolver tareas predictivas.
+
+Una vez generado el *embedding*, este puede incorporarse como conjunto de covariables dentro de un modelo supervisado:
+
+$$
+y_i = g(z_i) + \varepsilon_i
+$$
+
+donde $y_i$ representa la variable objetivo y $g(\cdot)$ corresponde al modelo predictivo utilizado.
+
+La hipótesis fundamental detrás de los *Earth Embeddings* es que estas representaciones contienen suficiente información semántica sobre el territorio para permitir la predicción de fenómenos observables como características urbanas, indicadores socioeconómicos, variables ambientales o métricas de movilidad.
+
+Por esta razón, resulta necesario comprender cómo se generan estas representaciones, qué información capturan y bajo qué condiciones pueden utilizarse exitosamente en tareas de ciencia de datos geoespacial.
+
+# Fundamentos teóricos
+
+Los *Earth Embeddings* constituyen una intersección entre observación terrestre, aprendizaje profundo, representación de datos y modelos fundacionales. Para comprender su funcionamiento resulta necesario revisar los conceptos que permiten transformar observaciones geoespaciales complejas en representaciones vectoriales reutilizables.
+
+Las siguientes secciones presentan los fundamentos técnicos más importantes para entender cómo se construyen los *embeddings* modernos utilizados en observación terrestre, incluyendo imágenes satelitales, *Vision Transformers*, aprendizaje auto-supervisado, *Masked Autoencoders* y modelos fundacionales geoespaciales.
+
+## Earth Embeddings
+
+Los *Earth Embeddings* son representaciones vectoriales aprendidas de ubicaciones geográficas que buscan resumir información compleja sobre la superficie terrestre en un conjunto reducido de dimensiones. Estas representaciones constituyen una extensión de la idea de *embeddings* utilizada en otras áreas de la inteligencia artificial, particularmente en procesamiento de lenguaje natural y visión computacional, donde objetos complejos son transformados en vectores numéricos que preservan relaciones relevantes dentro de los datos.
+
+En el contexto geoespacial, el objetivo es representar una ubicación mediante un vector que capture información sobre características físicas, ambientales, urbanas y humanas observables en dicha región. En lugar de trabajar directamente con millones de pixeles provenientes de imágenes satelitales, el investigador puede utilizar una representación compacta que resume patrones relevantes del territorio.
+
+Formalmente, puede considerarse una función:
+
+$$
+z_i = f(X_i)
+$$
+
+donde $X_i$ representa las observaciones geoespaciales disponibles para la ubicación $i$, $f(\cdot)$ corresponde al modelo de representación y $z_i$ es el *embedding* resultante.
+
+La principal motivación detrás de los *Earth Embeddings* surge de una limitación fundamental de los datos geoespaciales modernos. Actualmente, satélites como Landsat, Sentinel-1 y Sentinel-2 generan cantidades masivas de información sobre la superficie terrestre. Aunque estos datos contienen información valiosa para estudiar fenómenos ambientales, urbanos y socioeconómicos, su tamaño y complejidad dificultan su uso directo en modelos predictivos.
+
+Por esta razón, la comunidad de investigación ha comenzado a desarrollar modelos capaces de aprender representaciones generales de la superficie terrestre. Estas representaciones buscan conservar información relevante para múltiples tareas sin requerir que el investigador diseñe manualmente variables específicas para cada problema.
+
+De acuerdo con Klemmer et al. (2025), los *Earth Embeddings* cumplen cuatro funciones fundamentales: compresión, fusión, interpolación e integración. Estas funciones permiten comprender por qué los *Earth Embeddings* constituyen una herramienta central dentro de la nueva generación de modelos fundacionales geoespaciales.
+
+### Compresión
+
+Una de las propiedades más importantes de los *Earth Embeddings* es su capacidad de compresión. Los datos geoespaciales modernos poseen una dimensionalidad extremadamente alta debido a la resolución espacial de las imágenes satelitales y al número de bandas espectrales disponibles. Una sola imagen multiespectral puede contener millones de valores numéricos distribuidos a lo largo de diferentes canales de información.
+
+Por ejemplo, una imagen de Sentinel-2 con 13 bandas y una resolución espacial de $1000 \times 1000$ pixeles contiene aproximadamente 13 millones de observaciones individuales:
+
+$$
+13 \times 1000 \times 1000 = 13,000,000
+$$
+
+Trabajar directamente con este volumen de información resulta costoso tanto desde el punto de vista computacional como estadístico.
+
+Los *Earth Embeddings* permiten condensar esta información en vectores compactos de pocas decenas o cientos de dimensiones. En el caso de *AlphaEarth Foundations*, una región observada mediante millones de pixeles puede representarse mediante un vector de únicamente 64 dimensiones. Esta reducción facilita el almacenamiento, la transferencia y el uso de información geoespacial dentro de modelos predictivos tradicionales.
+
+La compresión no implica simplemente reducir el tamaño de los datos, sino preservar la información relevante sobre el territorio. El objetivo es que regiones con características similares continúen siendo reconocibles dentro del espacio de representación aun después de una reducción drástica de dimensionalidad.
+
+### Fusión
+
+Otra propiedad fundamental es la capacidad de fusionar múltiples modalidades de información dentro de una única representación geográfica.
+
+Los fenómenos observados sobre la superficie terrestre rara vez pueden explicarse utilizando una sola fuente de datos. Una ciudad, por ejemplo, puede describirse simultáneamente mediante imágenes ópticas, observaciones radar, datos climáticos, información demográfica, registros administrativos o incluso texto georreferenciado.
+
+Tradicionalmente, cada una de estas fuentes requería procesos de análisis independientes. Los investigadores debían construir variables específicas para cada modalidad y posteriormente integrarlas dentro de un mismo modelo.
+
+Los *Earth Embeddings* buscan resolver este problema aprendiendo una representación conjunta que incorpore simultáneamente información proveniente de diferentes fuentes. De esta manera, un único vector puede capturar aspectos relacionados con infraestructura urbana, cobertura vegetal, topografía, clima y actividad humana.
+
+Por ejemplo, una zona metropolitana no puede describirse únicamente mediante imágenes satelitales ni exclusivamente mediante datos censales. La fusión permite combinar ambos tipos de información dentro de una representación común que capture de forma más completa la complejidad del territorio.
+
+Otro ejemplo es *AlphaEarth*, que integra información proveniente de múltiples sensores y fuentes geoespaciales para producir una única representación de cada ubicación. Esto evita que el investigador tenga que construir un *pipeline* diferente para cada modalidad de información.
+
+### Interpolación
+
+Los *Earth Embeddings* también permiten realizar interpolación espacial dentro de un espacio latente continuo.
+
+En algunos modelos, particularmente aquellos basados en representaciones implícitas del espacio geográfico, es posible generar *embeddings* para coordenadas que no estuvieron presentes durante el entrenamiento. Esto significa que el modelo puede producir una representación para cualquier par de coordenadas geográficas dentro del dominio considerado.
+
+Formalmente, dado un punto geográfico definido por:
+
+$$
+(lat, lon)
+$$
+
+el modelo puede producir un vector:
+
+$$
+z = f(lat, lon)
+$$
+
+aunque esa ubicación específica nunca haya sido observada previamente.
+
+Esta propiedad resulta especialmente útil cuando se trabaja con regiones donde la información disponible es escasa o incompleta. Por ejemplo, si un modelo fue entrenado utilizando observaciones distribuidas sobre gran parte del territorio mexicano, podría generar representaciones para localidades específicas que no formaron parte del conjunto de entrenamiento original.
+
+La interpolación permite consultar cualquier ubicación geográfica de manera continua, sin depender exclusivamente de una cuadrícula fija de observaciones. Esta característica amplía considerablemente las posibilidades de análisis espacial y facilita la generalización hacia nuevas regiones.
+
+Por ejemplo, un investigador podría solicitar el *embedding* correspondiente a cualquier coordenada dentro de México, incluso si no existe una observación explícita para ese punto dentro del conjunto de entrenamiento.
+
+### Integración
+
+Más allá de comprimir o fusionar información, los *Earth Embeddings* buscan convertirse en una representación geográfica estándar reutilizable dentro de otros sistemas de inteligencia artificial.
+
+Una analogía útil proviene del procesamiento de lenguaje natural. Actualmente, los modelos de lenguaje no trabajan directamente con palabras como objetos aislados, sino mediante *word embeddings* que actúan como una representación estándar del lenguaje. Diferentes arquitecturas pueden consumir estas representaciones sin necesidad de reconstruir el significado de cada palabra desde cero.
+
+De manera similar, los *Earth Embeddings* pueden funcionar como un token geográfico universal. Una vez generado el vector asociado a una ubicación, este puede utilizarse como entrada para modelos de regresión, clasificación, agrupamiento, predicción espacial o sistemas más complejos de inteligencia artificial.
+
+Por ejemplo, un vector generado por *AlphaEarth* podría utilizarse para predecir niveles de ingreso, incidencia delictiva, acceso a infraestructura o indicadores ambientales sin necesidad de volver a procesar las imágenes satelitales originales. El mismo *embedding* puede alimentar múltiples modelos y tareas diferentes.
+
+Esta capacidad de integración permite que los *Earth Embeddings* actúen como una interfaz común entre observación terrestre y aprendizaje automático, facilitando el desarrollo de aplicaciones geoespaciales escalables y reutilizables.
+
+De acuerdo con Klemmer et al. (2025), esta propiedad permite que los *Earth Embeddings* comiencen a desempeñar un papel similar al de los *word embeddings* en procesamiento de lenguaje natural: convertirse en la representación estándar utilizada por modelos posteriores para razonar sobre información geográfica.
+
+
+### Importancia para la ciencia de datos geoespacial
+
+Las cuatro funciones descritas anteriormente permiten entender por qué los *Earth Embeddings* han adquirido una relevancia creciente dentro de la ciencia de datos geoespacial.
+
+La compresión permite manejar eficientemente grandes volúmenes de datos satelitales. La fusión facilita combinar múltiples fuentes de información dentro de una representación común. La interpolación permite generar representaciones para ubicaciones no observadas directamente. Finalmente, la integración convierte a los *Earth Embeddings* en una representación geográfica reutilizable dentro de distintos sistemas de inteligencia artificial.
+
+En conjunto, estas propiedades convierten a los *Earth Embeddings* en una herramienta especialmente atractiva para problemas de predicción geoespacial. Una vez obtenidos los vectores de representación, estos pueden incorporarse directamente a modelos estadísticos o de aprendizaje automático, permitiendo conectar observación terrestre con aplicaciones relacionadas con urbanización, infraestructura, medio ambiente, salud pública, movilidad y condiciones socioeconómicas.
