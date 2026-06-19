@@ -228,3 +228,546 @@ Las cuatro funciones descritas anteriormente permiten entender por qué los *Ear
 La compresión permite manejar eficientemente grandes volúmenes de datos satelitales. La fusión facilita combinar múltiples fuentes de información dentro de una representación común. La interpolación permite generar representaciones para ubicaciones no observadas directamente. Finalmente, la integración convierte a los *Earth Embeddings* en una representación geográfica reutilizable dentro de distintos sistemas de inteligencia artificial.
 
 En conjunto, estas propiedades convierten a los *Earth Embeddings* en una herramienta especialmente atractiva para problemas de predicción geoespacial. Una vez obtenidos los vectores de representación, estos pueden incorporarse directamente a modelos estadísticos o de aprendizaje automático, permitiendo conectar observación terrestre con aplicaciones relacionadas con urbanización, infraestructura, medio ambiente, salud pública, movilidad y condiciones socioeconómicas.
+
+## Imágenes satelitales como insumo
+
+Los *Earth Embeddings* no se generan directamente a partir de coordenadas geográficas ni de variables tabulares. En la mayoría de los modelos modernos, la fuente principal de información proviene de datos de observación terrestre obtenidos mediante satélites. Estas observaciones permiten capturar características físicas, ambientales y humanas de la superficie terrestre a escalas espaciales y temporales imposibles de obtener mediante trabajo de campo tradicional.
+
+A diferencia de una fotografía convencional, una imagen satelital constituye una medición física de la radiación electromagnética reflejada o emitida por la superficie terrestre. Cada pixel representa una observación cuantitativa de un área geográfica específica, mientras que cada banda espectral registra información correspondiente a una región particular del espectro electromagnético.
+
+Gracias a esta capacidad, los satélites pueden detectar información relacionada con vegetación, cuerpos de agua, humedad del suelo, infraestructura urbana, actividad agrícola y otros fenómenos que no siempre son visibles para el ojo humano.
+
+### Bandas espectrales
+
+Las imágenes satelitales modernas suelen registrar múltiples bandas espectrales simultáneamente. Cada banda captura información en una longitud de onda específica del espectro electromagnético.
+
+Por ejemplo, los sensores ópticos pueden registrar:
+
+- Azul (*Blue*)
+- Verde (*Green*)
+- Rojo (*Red*)
+- Infrarrojo cercano (*Near Infrared*)
+- Infrarrojo de onda corta (*Shortwave Infrared*)
+
+Cada banda aporta información distinta sobre las características observadas en la superficie terrestre.
+
+La vegetación saludable, por ejemplo, refleja grandes cantidades de radiación en el infrarrojo cercano mientras absorbe radiación en la banda roja debido a la presencia de clorofila. Esta diferencia permite construir índices ampliamente utilizados en observación terrestre, como el NDVI (*Normalized Difference Vegetation Index*).
+
+Por esta razón, dos regiones que podrían parecer similares en una fotografía convencional pueden presentar patrones muy distintos cuando se observan a través de diferentes bandas espectrales.
+
+### Representación como tensores
+
+Desde una perspectiva computacional, una imagen satelital puede representarse como un tensor multidimensional.
+
+Mientras que una fotografía RGB tradicional puede representarse como:
+
+$$
+H \times W \times 3
+$$
+
+donde:
+
+- $H$ representa la altura,
+- $W$ representa el ancho,
+- $3$ corresponde a los canales rojo, verde y azul,
+
+una imagen satelital multiespectral puede representarse como:
+
+$$
+H \times W \times B
+$$
+
+donde $B$ corresponde al número de bandas espectrales disponibles.
+
+En consecuencia, las imágenes satelitales contienen considerablemente más información que una imagen convencional utilizada en tareas clásicas de visión computacional.
+
+### El caso de Sentinel-2
+
+Uno de los sistemas más utilizados en observación terrestre es Sentinel-2, desarrollado por la Agencia Espacial Europea (*European Space Agency*).
+
+Sentinel-2 proporciona imágenes multiespectrales con 13 bandas distribuidas a lo largo del espectro visible, infrarrojo cercano e infrarrojo de onda corta. Dependiendo de la banda considerada, la resolución espacial puede variar entre 10, 20 y 60 metros por pixel.
+
+Estas características permiten monitorear fenómenos relacionados con agricultura, cobertura vegetal, expansión urbana, recursos hídricos y cambios ambientales a escala global.
+
+Debido a su cobertura gratuita, frecuencia de actualización y calidad de observación, Sentinel-2 se ha convertido en una de las principales fuentes de información para el entrenamiento de modelos fundacionales geoespaciales como *Clay*, *Prithvi* y *AlphaEarth*.
+
+### El problema de la alta dimensionalidad
+
+Aunque las imágenes satelitales contienen una enorme cantidad de información útil, su tamaño representa un desafío importante para la ciencia de datos.
+
+Consideremos una imagen multiespectral de Sentinel-2 de tamaño:
+
+$$
+224 \times 224
+$$
+
+pixeles y 13 bandas espectrales.
+
+El número total de observaciones almacenadas sería:
+
+$$
+224 \times 224 \times 13 = 652,288
+$$
+
+valores numéricos.
+
+Sin embargo, los modelos fundacionales suelen procesar millones de imágenes de este tipo durante el entrenamiento. Como consecuencia, el volumen total de información puede alcanzar miles de millones de observaciones.
+
+Esta alta dimensionalidad constituye una de las principales motivaciones para el desarrollo de *Earth Embeddings*. En lugar de trabajar directamente con cientos de miles o millones de valores por imagen, los modelos buscan aprender representaciones compactas capaces de conservar la información relevante para tareas posteriores.
+
+## Cómo se producen los embeddings
+
+Comprender qué son los *Earth Embeddings* requiere entender el proceso mediante el cual una imagen satelital es transformada en una representación vectorial compacta. Aunque los modelos modernos pueden diferir en arquitectura y fuentes de datos, la mayoría comparten una idea general: aprender automáticamente representaciones útiles a partir de observaciones geoespaciales sin depender de etiquetas humanas.
+
+En los modelos fundacionales actuales, este proceso suele involucrar arquitecturas basadas en *Transformers* y estrategias de aprendizaje auto-supervisado. Entre las técnicas más influyentes destacan los *Vision Transformers* (*ViT*) y los *Masked Autoencoders* (*MAE*), que constituyen la base de numerosos modelos modernos de observación terrestre.
+
+De manera simplificada, el proceso puede describirse mediante la siguiente secuencia:
+
+$$
+\text{Imagen satelital}
+\rightarrow
+\text{Patches}
+\rightarrow
+\text{Tokens}
+\rightarrow
+\text{Transformer}
+\rightarrow
+\text{Embedding}
+$$
+
+Cada una de estas etapas cumple una función específica dentro de la construcción de la representación final.
+
+### Vision Transformers
+
+Los *Vision Transformers* (*ViT*) representan una adaptación de la arquitectura *Transformer*, originalmente desarrollada para procesamiento de lenguaje natural, al dominio de visión computacional.
+
+En procesamiento de lenguaje natural, un modelo *Transformer* recibe como entrada una secuencia de palabras o *tokens*. Cada palabra es transformada en una representación vectorial y posteriormente procesada mediante mecanismos de atención que permiten capturar relaciones entre elementos de la secuencia.
+
+La idea fundamental de los *Vision Transformers* consiste en tratar una imagen como una secuencia de elementos análoga a una oración. En lugar de procesar palabras, el modelo procesa pequeñas regiones de la imagen conocidas como *patches*.
+
+De esta manera, una imagen puede convertirse en una secuencia ordenada de representaciones que posteriormente son analizadas mediante mecanismos de atención similares a los utilizados en modelos de lenguaje.
+
+La principal ventaja de esta aproximación es que permite capturar relaciones globales entre distintas regiones de la imagen. Mientras que las redes convolucionales tradicionales suelen enfocarse inicialmente en patrones locales, los *Vision Transformers* pueden modelar interacciones entre regiones distantes desde etapas tempranas del procesamiento.
+
+Esta capacidad resulta particularmente valiosa en observación terrestre, donde fenómenos relevantes pueden extenderse a grandes escalas espaciales y depender de relaciones complejas entre diferentes partes del territorio.
+
+### Patchification
+
+Para que una imagen pueda procesarse mediante un *Vision Transformer*, primero debe transformarse en una secuencia de elementos comparables a los tokens utilizados en procesamiento de lenguaje natural.
+
+Este procedimiento se conoce como *patchification*.
+
+La idea consiste en dividir la imagen original en pequeños bloques de tamaño fijo denominados *patches*. Cada *patch* contiene información de una región específica de la imagen y posteriormente será convertido en un vector numérico.
+
+Por ejemplo, consideremos una imagen de:
+
+$$
+224 \times 224
+$$
+
+pixeles.
+
+Si se utilizan *patches* de:
+
+$$
+16 \times 16
+$$
+
+pixeles, entonces la imagen se divide en:
+
+$$
+\frac{224}{16}=14
+$$
+
+bloques por dimensión.
+
+Como consecuencia, el número total de *patches* será:
+
+$$
+14 \times 14 = 196
+$$
+
+Cada uno de estos 196 *patches* se convierte en un token de entrada para el *Transformer*.
+
+Este procedimiento transforma una imagen bidimensional en una secuencia ordenada de vectores, permitiendo reutilizar arquitecturas originalmente diseñadas para lenguaje natural.
+
+Desde una perspectiva conceptual, cada *patch* funciona como una pequeña ventana de observación sobre el territorio. Algunos *patches* pueden contener vegetación, otros infraestructura urbana, cuerpos de agua o áreas agrícolas. El objetivo del modelo consiste en aprender cómo combinar esta información para construir una representación coherente de la ubicación observada.
+
+### Positional Encoding
+
+Una vez que la imagen ha sido dividida en *patches* y transformada en una secuencia de tokens, surge un problema importante. Los *Transformers* procesan secuencias de vectores, pero no poseen conocimiento inherente sobre la posición espacial de cada elemento dentro de la imagen.
+
+Por ejemplo, dos secuencias que contengan exactamente los mismos *patches* pero en posiciones distintas producirían representaciones similares si no existiera información adicional sobre su ubicación original.
+
+Para resolver este problema, los *Vision Transformers* incorporan información espacial mediante un mecanismo denominado *Positional Encoding*. Este procedimiento consiste en asociar a cada token un vector adicional que codifica su posición dentro de la imagen.
+
+Formalmente, si $x_i$ representa el token asociado al *patch* $i$ y $p_i$ representa su codificación posicional, la entrada final al *Transformer* puede expresarse como:
+
+$$
+z_i = x_i + p_i
+$$
+
+De esta manera, el modelo recibe simultáneamente información sobre el contenido visual de cada *patch* y sobre su ubicación espacial dentro de la imagen.
+
+La incorporación de información posicional resulta fundamental para tareas de observación terrestre, ya que la distribución espacial de los elementos observados suele contener información relevante. La ubicación relativa de cuerpos de agua, infraestructura urbana, áreas agrícolas o zonas boscosas puede modificar significativamente la interpretación de una escena geográfica.
+
+### Self-attention
+
+Una vez que cada *patch* ha sido transformado en un token y se ha incorporado información espacial mediante *Positional Encoding*, el modelo puede comenzar a analizar las relaciones existentes entre las diferentes regiones de la imagen. Esta tarea se realiza mediante el mecanismo denominado *self-attention*, que constituye el componente central de la arquitectura *Transformer*.
+
+La intuición detrás del *self-attention* es relativamente sencilla. Cuando una persona observa una imagen, rara vez interpreta cada región de manera aislada. En cambio, analiza una zona considerando simultáneamente el contexto proporcionado por otras partes de la escena.
+
+Por ejemplo, la presencia de una carretera puede adquirir significados distintos dependiendo de si se encuentra rodeada por zonas urbanas, áreas agrícolas o cuerpos de agua. De manera similar, una región con vegetación puede interpretarse de forma diferente dependiendo de los patrones observados en su entorno.
+
+El mecanismo de *self-attention* busca replicar esta capacidad permitiendo que cada token intercambie información con todos los demás tokens de la imagen. Gracias a ello, cada *patch* puede incorporar contexto proveniente de regiones cercanas o lejanas del territorio observado.
+
+Formalmente, cada token se transforma en tres representaciones distintas conocidas como *Query* ($Q$), *Key* ($K$) y *Value* ($V$). Estas representaciones permiten determinar qué tan relevante resulta la información contenida en un token para los demás elementos de la secuencia.
+
+- $Q$ (*Query*) representa la información que el token desea buscar.
+- $K$ (*Key*) representa la información que el token puede ofrecer.
+- $V$ (*Value*) contiene la información que será transmitida.
+
+El mecanismo de atención calcula puntuaciones de similitud entre consultas y llaves mediante:
+
+$$
+QK^T
+$$
+
+Posteriormente, estas puntuaciones son normalizadas utilizando una función *softmax*:
+
+$$
+\text{Attention}(Q,K,V)
+=
+\text{softmax}
+\left(
+\frac{QK^T}{\sqrt{d_k}}
+\right)
+V
+$$
+
+donde $d_k$ representa la dimensión de las llaves.
+
+El resultado es una combinación ponderada de información proveniente de todos los tokens de entrada. Los *patches* considerados más relevantes reciben una mayor atención, mientras que aquellos menos informativos contribuyen en menor medida a la representación final.
+
+Una característica fundamental del *self-attention* es que puede relacionar directamente regiones distantes de la imagen. A diferencia de las redes convolucionales tradicionales, que inicialmente operan sobre vecindarios locales, los *Transformers* pueden capturar dependencias globales desde las primeras capas del modelo.
+
+En observación terrestre esta capacidad resulta especialmente valiosa. Fenómenos como expansión urbana, redes de transporte, cuencas hidrológicas o sistemas agrícolas suelen extenderse a escalas espaciales amplias. Por lo tanto, comprender relaciones entre regiones alejadas puede ser tan importante como analizar patrones locales.
+
+### Multi-head attention
+
+En la práctica, los modelos modernos no utilizan un único mecanismo de atención, sino múltiples mecanismos funcionando simultáneamente. Esta estrategia se conoce como *multi-head attention*.
+
+Cada cabeza de atención aprende a enfocarse en aspectos diferentes de la información disponible. Algunas pueden especializarse en patrones relacionados con vegetación, otras en estructuras urbanas y otras en relaciones espaciales de gran escala.
+
+Si el modelo utiliza $h$ cabezas de atención, cada una calcula independientemente:
+
+$$
+\text{head}_i
+=
+\text{Attention}(Q_i,K_i,V_i)
+$$
+
+Posteriormente, todas las cabezas se concatenan:
+
+$$
+\text{MultiHead}(Q,K,V)
+=
+\text{Concat}
+(\text{head}_1,\ldots,\text{head}_h)
+W_O
+$$
+
+donde $W_O$ representa una matriz de proyección final.
+
+Esta estrategia permite que el modelo capture simultáneamente múltiples tipos de relaciones presentes en la imagen. Por ejemplo, una cabeza podría enfocarse principalmente en patrones de cobertura vegetal mientras otra identifica estructuras urbanas o redes de transporte.
+
+La combinación de estas perspectivas produce representaciones considerablemente más ricas que las obtenidas mediante un único mecanismo de atención, permitiendo construir *embeddings* capaces de capturar relaciones complejas entre distintos componentes del territorio.
+
+### Masked Autoencoders
+
+Aunque los *Vision Transformers* proporcionan una arquitectura poderosa para procesar imágenes, todavía surge una pregunta fundamental: ¿cómo puede entrenarse un modelo geoespacial cuando no existen etiquetas disponibles para millones de ubicaciones sobre la Tierra?
+
+En observación terrestre, obtener etiquetas de alta calidad suele ser costoso y limitado. Por ejemplo, variables como pobreza, ingreso, cobertura de servicios o indicadores ambientales requieren levantamientos especializados que normalmente sólo están disponibles para una pequeña fracción del territorio.
+
+Para superar esta limitación, los modelos fundacionales modernos utilizan técnicas de aprendizaje auto-supervisado (*self-supervised learning*). Entre las más exitosas se encuentran los *Masked Autoencoders* (*MAE*), introducidos originalmente para visión computacional y posteriormente adaptados a observación terrestre.
+
+La idea central es sorprendentemente simple. Durante el entrenamiento, una gran proporción de los *patches* de la imagen es ocultada deliberadamente. El modelo únicamente observa una pequeña fracción de la información original y debe reconstruir las regiones faltantes.
+
+Por ejemplo, consideremos una imagen dividida en 196 *patches*:
+
+$$
+14 \times 14 = 196
+$$
+
+Durante el entrenamiento, aproximadamente el 75% de los *patches* pueden ocultarse aleatoriamente:
+
+$$
+196 \times 0.75 = 147
+$$
+
+Como consecuencia, el modelo sólo recibe alrededor de:
+
+$$
+196 - 147 = 49
+$$
+
+*patches* visibles.
+
+A partir de esta información parcial, el modelo debe reconstruir los *patches* faltantes lo mejor posible.
+
+De manera conceptual, el proceso puede representarse como:
+
+$$
+\text{Imagen}
+\rightarrow
+\text{Ocultar patches}
+\rightarrow
+\text{Reconstrucción}
+\rightarrow
+\text{Aprendizaje}
+$$
+
+La dificultad de esta tarea obliga al modelo a aprender patrones estructurales presentes en los datos. Para reconstruir correctamente las regiones ocultas, el sistema debe comprender relaciones espaciales, características espectrales y regularidades observadas en la superficie terrestre.
+
+En lugar de memorizar imágenes específicas, el modelo aprende representaciones generales capaces de describir diferentes tipos de paisajes, ecosistemas y entornos urbanos.
+
+Una ventaja importante de este enfoque es que no requiere etiquetas humanas. Cada imagen genera automáticamente su propia tarea de aprendizaje, ya que los *patches* ocultos actúan como objetivos que deben ser reconstruidos.
+
+Esto permite aprovechar cantidades masivas de datos satelitales disponibles públicamente, convirtiendo a los *Masked Autoencoders* en una herramienta especialmente adecuada para entrenar modelos fundacionales geoespaciales.
+
+### Arquitectura encoder-decoder
+
+Los *Masked Autoencoders* utilizan una arquitectura compuesta por dos elementos principales:
+
+- Un encoder.
+- Un decoder.
+
+El encoder recibe únicamente los *patches* visibles de la imagen y produce una representación latente compacta.
+
+Posteriormente, el decoder utiliza esta representación junto con marcadores especiales correspondientes a los *patches* ocultos para intentar reconstruir la imagen original.
+
+De manera simplificada:
+
+$$
+\text{Patches visibles}
+\rightarrow
+\text{Encoder}
+\rightarrow
+\text{Representación latente}
+\rightarrow
+\text{Decoder}
+\rightarrow
+\text{Reconstrucción}
+$$
+
+Durante el entrenamiento, el objetivo consiste en minimizar el error de reconstrucción entre los *patches* originales y aquellos generados por el decoder.
+
+A medida que este error disminuye, el encoder aprende representaciones cada vez más informativas sobre la estructura de los datos observados.
+
+### Relación con los Earth Embeddings
+
+Una vez concluido el entrenamiento, el decoder deja de ser necesario.
+
+La parte realmente valiosa del modelo es el encoder, ya que contiene el conocimiento adquirido durante el proceso de reconstrucción.
+
+Las representaciones producidas por el encoder constituyen precisamente los *Earth Embeddings* utilizados posteriormente en tareas predictivas.
+
+En otras palabras, el modelo aprende primero a reconstruir información faltante y posteriormente reutiliza el conocimiento adquirido para representar ubicaciones geográficas mediante vectores compactos.
+
+Esta estrategia ha demostrado ser especialmente efectiva porque permite entrenar modelos utilizando enormes cantidades de imágenes satelitales sin depender de etiquetas humanas. Como resultado, los *Masked Autoencoders* se han convertido en uno de los componentes fundamentales de modelos modernos como *Clay*, *Prithvi* y *AlphaEarth Foundations*.
+
+## Panorama de modelos geoespaciales
+
+Durante los últimos años han surgido múltiples modelos capaces de generar *Earth Embeddings*. Aunque todos comparten el objetivo de representar ubicaciones geográficas mediante vectores compactos, difieren significativamente en la forma en que construyen dichas representaciones.
+
+Una clasificación útil consiste en distinguir entre modelos explícitos e implícitos. Esta diferencia determina tanto el tipo de información utilizada como la manera en que los *embeddings* pueden consultarse posteriormente.
+
+### Modelos explícitos
+
+Los modelos explícitos generan representaciones directamente a partir de observaciones de una ubicación específica. Para obtener un *embedding*, el modelo requiere acceder a datos asociados al punto geográfico de interés, como imágenes satelitales, variables climáticas o información proveniente de sensores remotos.
+
+De manera conceptual, estos modelos siguen el esquema:
+
+$$
+\text{Datos geoespaciales}
+\rightarrow
+\text{Modelo}
+\rightarrow
+\text{Embedding}
+$$
+
+En este caso, la representación depende explícitamente de las observaciones disponibles para la ubicación analizada.
+
+Por ejemplo, si se desea generar un *embedding* para una región determinada utilizando una imagen de Sentinel-2, el modelo debe procesar dicha imagen antes de producir la representación correspondiente.
+
+La mayoría de los modelos fundacionales recientes pertenecen a esta categoría. Entre ellos destacan *Clay*, *Prithvi* y *AlphaEarth Foundations*, los cuales utilizan observaciones satelitales y otras fuentes de información geoespacial durante el proceso de entrenamiento.
+
+Una ventaja importante de los modelos explícitos es que pueden incorporar información rica y actualizada sobre la superficie terrestre. Sin embargo, también requieren acceso a los datos originales cada vez que se desea generar una nueva representación.
+
+### Modelos implícitos
+
+Los modelos implícitos adoptan una estrategia diferente.
+
+En lugar de depender directamente de imágenes satelitales u observaciones físicas durante la consulta, estos modelos aprenden una función continua que relaciona coordenadas geográficas con representaciones latentes.
+
+Formalmente:
+
+$$
+(lat, lon)
+\rightarrow
+\text{Embedding}
+$$
+
+Una vez entrenado el modelo, basta con proporcionar un par de coordenadas geográficas para obtener la representación correspondiente.
+
+En este caso, el conocimiento adquirido durante el entrenamiento queda almacenado dentro de los parámetros del modelo. Como consecuencia, no resulta necesario consultar imágenes satelitales durante la etapa de inferencia.
+
+Esta característica permite generar representaciones para prácticamente cualquier ubicación geográfica de manera inmediata.
+
+Un ejemplo representativo es *SatCLIP*, que aprende una representación continua del espacio geográfico utilizando coordenadas y señales derivadas de observaciones terrestres.
+
+Los modelos implícitos suelen destacar por su capacidad de interpolación espacial, ya que pueden generar representaciones incluso para regiones que no fueron observadas explícitamente durante el entrenamiento.
+
+Sin embargo, debido a que dependen principalmente de coordenadas geográficas, pueden tener dificultades para capturar cambios temporales recientes o detalles específicos presentes en imágenes satelitales actualizadas.
+
+### Comparación conceptual
+
+Ambos enfoques buscan resolver el mismo problema: representar ubicaciones geográficas mediante vectores útiles para tareas posteriores de predicción.
+
+No obstante, difieren en la fuente de información utilizada durante la inferencia.
+
+Los modelos explícitos requieren observaciones del territorio para producir una representación, mientras que los modelos implícitos generan representaciones directamente a partir de coordenadas geográficas.
+
+De manera simplificada:
+
+$$
+\text{Explícito:}
+\quad
+X
+\rightarrow
+z
+$$
+
+$$
+\text{Implícito:}
+\quad
+(lat, lon)
+\rightarrow
+z
+$$
+
+Esta diferencia influye en propiedades importantes como capacidad de interpolación, dependencia de datos externos, actualización temporal y complejidad computacional.
+
+Por esta razón, los benchmarks modernos suelen comparar modelos pertenecientes a ambas categorías para evaluar sus fortalezas y limitaciones en distintas tareas geoespaciales.
+
+### SatCLIP
+
+*SatCLIP* constituye uno de los ejemplos más representativos de modelos implícitos para representación geoespacial. Inspirado en el éxito de *CLIP* (*Contrastive Language-Image Pretraining*) en visión computacional, este modelo busca aprender una representación continua de la superficie terrestre utilizando coordenadas geográficas y observaciones derivadas de datos satelitales.
+
+La idea central consiste en asociar cada ubicación geográfica con un vector dentro de un espacio latente continuo. Durante el entrenamiento, el modelo aprende a relacionar coordenadas geográficas con información observada sobre el territorio, de manera que ubicaciones similares produzcan representaciones cercanas entre sí.
+
+Una vez concluido el entrenamiento, el modelo puede generar un *embedding* para cualquier ubicación utilizando únicamente sus coordenadas:
+
+$$
+(lat, lon)
+\rightarrow
+z
+$$
+
+Esta característica convierte a *SatCLIP* en un modelo altamente eficiente desde el punto de vista computacional. No es necesario consultar imágenes satelitales durante la inferencia, ya que el conocimiento geográfico se encuentra almacenado en los parámetros del modelo.
+
+Otra ventaja importante es su capacidad de interpolación espacial. Debido a que aprende una función continua sobre la superficie terrestre, puede generar representaciones para regiones que no fueron observadas explícitamente durante el entrenamiento.
+
+Sin embargo, esta misma característica también constituye una limitación. Al depender únicamente de coordenadas durante la inferencia, el modelo no puede incorporar directamente cambios recientes observados por sensores satelitales. Como consecuencia, puede perder información específica sobre eventos o transformaciones recientes del territorio.
+
+Por esta razón, aunque *SatCLIP* suele mostrar resultados competitivos en diversas tareas geoespaciales, los modelos explícitos más recientes tienden a superarlo cuando se requiere capturar información detallada y actualizada de la superficie terrestre.
+
+### Clay
+
+*Clay* pertenece a la categoría de modelos explícitos y representa una de las primeras aproximaciones modernas a los modelos fundacionales para observación terrestre.
+
+A diferencia de *SatCLIP*, este modelo utiliza directamente imágenes satelitales durante el proceso de generación de *embeddings*. Su objetivo consiste en aprender representaciones generales del territorio a partir de observaciones obtenidas mediante sensores remotos.
+
+La arquitectura de *Clay* se basa en *Vision Transformers* y técnicas de aprendizaje auto-supervisado. Durante el entrenamiento, el modelo observa grandes cantidades de imágenes satelitales y aprende representaciones latentes capaces de capturar patrones relacionados con vegetación, urbanización, cuerpos de agua, agricultura e infraestructura.
+
+Una característica importante de *Clay* es que busca producir representaciones reutilizables en múltiples tareas. Una vez entrenado, el modelo puede generar *embeddings* que posteriormente son utilizados como variables de entrada para problemas de clasificación, regresión o predicción espacial.
+
+Conceptualmente, el flujo de trabajo puede representarse como:
+
+$$
+\text{Imagen satelital}
+\rightarrow
+\text{Clay}
+\rightarrow
+\text{Embedding}
+\rightarrow
+\text{Modelo predictivo}
+$$
+
+La principal ventaja de este enfoque es que las representaciones contienen información directamente observada por los sensores satelitales. Esto permite capturar características específicas del territorio que no necesariamente pueden inferirse a partir de coordenadas geográficas únicamente.
+
+Como resultado, *Clay* suele obtener mejores resultados que modelos implícitos en tareas donde la información visual resulta especialmente relevante.
+
+### Prithvi
+
+*Prithvi* es un modelo fundacional para observación terrestre desarrollado conjuntamente por la NASA e IBM Research. Su objetivo principal consiste en aprender representaciones generales de la superficie terrestre a partir de grandes volúmenes de imágenes satelitales multiespectrales.
+
+Al igual que *Clay*, *Prithvi* pertenece a la categoría de modelos explícitos, ya que requiere observaciones satelitales para generar representaciones geoespaciales. Sin embargo, incorpora avances recientes en aprendizaje auto-supervisado que le permiten aprovechar de manera más eficiente la información contenida en los datos de observación terrestre.
+
+La arquitectura de *Prithvi* se basa en *Vision Transformers* y *Masked Autoencoders*. Durante el entrenamiento, una gran proporción de los *patches* de cada imagen es ocultada aleatoriamente, obligando al modelo a reconstruir la información faltante a partir del contexto disponible.
+
+Este proceso permite aprender representaciones robustas sin necesidad de etiquetas humanas, aprovechando enormes cantidades de imágenes satelitales disponibles públicamente.
+
+De manera simplificada, el flujo de entrenamiento puede representarse como:
+
+$$
+\text{Imagen satelital}
+\rightarrow
+\text{Ocultar patches}
+\rightarrow
+\text{Reconstrucción}
+\rightarrow
+\text{Embedding}
+$$
+
+Una característica importante de *Prithvi* es que fue diseñado específicamente para trabajar con datos de observación terrestre. Esto le permite aprovechar propiedades particulares de las imágenes satelitales, como la existencia de múltiples bandas espectrales y la presencia de patrones espaciales de gran escala.
+
+Gracias a ello, las representaciones generadas por *Prithvi* pueden utilizarse posteriormente en tareas relacionadas con agricultura, monitoreo ambiental, detección de cambios, clasificación de cobertura terrestre y análisis geoespacial.
+
+Dentro de la evolución de los modelos fundacionales geoespaciales, *Prithvi* representa una transición importante hacia arquitecturas cada vez más especializadas para observación terrestre y constituye uno de los antecedentes más relevantes de modelos posteriores como *AlphaEarth Foundations*.
+
+### AlphaEarth Foundations
+
+*AlphaEarth Foundations* representa uno de los desarrollos más recientes y avanzados en el área de modelos fundacionales para observación terrestre. Fue desarrollado por Google DeepMind con el objetivo de construir una representación geoespacial general capaz de capturar información proveniente de múltiples fuentes de observación terrestre a escala planetaria.
+
+A diferencia de modelos anteriores, *AlphaEarth* adopta un enfoque explícitamente multimodal. En lugar de utilizar únicamente imágenes ópticas, integra información proveniente de diferentes sensores y fuentes geoespaciales dentro de una representación común.
+
+Entre las fuentes utilizadas durante el entrenamiento se encuentran imágenes ópticas, observaciones radar, variables climáticas, información topográfica y otras fuentes complementarias de observación terrestre.
+
+Esta estrategia permite construir representaciones considerablemente más ricas que aquellas obtenidas a partir de una única modalidad de datos.
+
+Conceptualmente, el flujo general puede representarse como:
+
+$$
+\text{Múltiples fuentes geoespaciales}
+\rightarrow
+\text{AlphaEarth}
+\rightarrow
+\text{Earth Embedding}
+$$
+
+Uno de los aspectos más relevantes de *AlphaEarth* es la introducción de representaciones compactas de únicamente 64 dimensiones. A pesar de esta dimensionalidad relativamente reducida, los embeddings logran preservar información suficiente para obtener resultados competitivos en una amplia variedad de tareas geoespaciales.
+
+La capacidad de condensar información compleja en vectores tan compactos constituye un ejemplo directo de la función de compresión descrita anteriormente para los *Earth Embeddings*.
+
+Además de la multimodalidad, *AlphaEarth* incorpora explícitamente información temporal. La superficie terrestre se encuentra en constante cambio debido a fenómenos naturales y actividad humana, por lo que resulta insuficiente considerar únicamente observaciones estáticas.
+
+Para abordar este problema, el modelo incorpora información proveniente de múltiples momentos temporales, permitiendo capturar dinámicas relacionadas con crecimiento urbano, cambios en cobertura vegetal, actividad agrícola y otros procesos espacio-temporales.
+
+El resultado final es una representación geoespacial conocida como *Space-Time-Precision (STP) embedding*, diseñada para resumir información espacial, temporal y multimodal dentro de un único vector compacto.
+
+Una ventaja práctica importante es que estos embeddings se encuentran disponibles públicamente a través de Google Earth Engine. Esto permite que investigadores y científicos de datos puedan consultar representaciones geoespaciales avanzadas sin necesidad de entrenar modelos fundacionales desde cero.
+
+En los benchmarks reportados por Google DeepMind, *AlphaEarth* demuestra un desempeño competitivo o superior respecto a modelos anteriores en diversas tareas relacionadas con variables socioeconómicas, ambientales y urbanas.
+
+Por esta razón, *AlphaEarth Foundations* constituye actualmente uno de los referentes más importantes dentro de la investigación en *Earth Embeddings* y representa el modelo central estudiado durante la presente estancia de investigación.
