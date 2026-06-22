@@ -5,7 +5,7 @@ author: "Andrés Padrón Quintana"
 date: "`r format(Sys.Date(), '%d de %B de %Y')`"
 
 output:
-  pdf_document:
+  bookdown::pdf_document2:
     toc: true
     toc_depth: 3
     number_sections: true
@@ -771,3 +771,126 @@ Una ventaja práctica importante es que estos embeddings se encuentran disponibl
 En los benchmarks reportados por Google DeepMind, *AlphaEarth* demuestra un desempeño competitivo o superior respecto a modelos anteriores en diversas tareas relacionadas con variables socioeconómicas, ambientales y urbanas.
 
 Por esta razón, *AlphaEarth Foundations* constituye actualmente uno de los referentes más importantes dentro de la investigación en *Earth Embeddings* y representa el modelo central estudiado durante la presente estancia de investigación.
+
+# Implementación y exploración práctica de SatCLIP
+
+## Preparación del entorno
+
+Con el objetivo de comprender el funcionamiento práctico de los modelos implícitos de representación geoespacial, se realizó la instalación y configuración local de SatCLIP utilizando el repositorio oficial publicado por Microsoft.
+
+El proceso incluyó:
+
+- Clonación del repositorio oficial de SatCLIP.
+- Creación de un entorno virtual mediante Conda.
+- Instalación de las dependencias requeridas.
+- Descarga automática del modelo preentrenado desde Hugging Face.
+- Ejecución de pruebas de inferencia para validar el correcto funcionamiento del modelo.
+
+Durante esta etapa se documentaron los pasos necesarios para reproducir la generación de embeddings geoespaciales de manera local, permitiendo posteriormente su integración dentro del pipeline del proyecto.
+
+## Extracción de embeddings geográficos
+
+Una vez configurado el entorno, se realizó una prueba inicial de inferencia utilizando coordenadas geográficas correspondientes a distintas ubicaciones.
+
+A diferencia de modelos explícitos como Clay, Prithvi o AlphaEarth, SatCLIP pertenece a la categoría de modelos implícitos. Esto significa que durante la etapa de inferencia únicamente requiere coordenadas geográficas para generar representaciones vectoriales.
+
+Formalmente, el modelo implementa una función del tipo:
+
+$$
+(lat, lon) \rightarrow z
+$$
+
+donde:
+
+- $(lat, lon)$ representa una ubicación geográfica.
+- $z$ corresponde al embedding generado por el modelo.
+
+Para validar este comportamiento se generaron embeddings utilizando el modelo preentrenado **SatCLIP-ViT16-L40**.
+
+Los resultados confirmaron que cada ubicación es transformada en un vector de 256 dimensiones:
+
+$$
+z \in \mathbb{R}^{256}
+$$
+
+Estos vectores constituyen representaciones latentes aprendidas durante el entrenamiento del modelo y buscan capturar información geográfica relevante sobre cada ubicación.
+
+## Visualización mediante Análisis de Componentes Principales (PCA)
+
+Debido a que los embeddings generados por SatCLIP poseen 256 dimensiones, resulta imposible visualizarlos directamente.
+
+Para facilitar su interpretación se utilizó **Análisis de Componentes Principales (Principal Component Analysis, PCA)**, una técnica de reducción de dimensionalidad que proyecta los datos sobre un espacio de menor dimensión conservando la mayor cantidad posible de variabilidad.
+
+La proyección se realizó sobre las dos primeras componentes principales:
+
+$$
+\mathbb{R}^{256}
+\rightarrow
+\mathbb{R}^{2}
+$$
+
+permitiendo representar cada ciudad como un punto dentro de un plano bidimensional.
+
+La Figura \@ref(fig:satclip-pca-capitales) muestra la distribución obtenida para las 32 capitales estatales de México.
+
+```{r satclip-pca-capitales, echo=FALSE, echo=FALSE, out.width="95%", fig.align="center", fig.cap="Proyección PCA de los embeddings generados por SatCLIP para las 32 capitales estatales de México."}
+knitr::include_graphics("figures/satclip_mexico_capitals_pca.png")
+```
+
+Puede observarse que algunas ciudades presentan agrupamientos naturales dentro del espacio latente aprendido por el modelo. Aunque la proyección bidimensional no conserva completamente la estructura original de las 256 dimensiones, sí permite visualizar patrones generales de organización geográfica.
+
+Particularmente, varias ciudades del centro del país aparecen relativamente cercanas entre sí, mientras que algunas ciudades del norte y sureste muestran una separación más marcada dentro del espacio de representación.
+
+## Similaridad coseno entre embeddings
+
+Con el objetivo de analizar cuantitativamente las relaciones entre ciudades, se calculó la similaridad coseno entre pares de embeddings.
+
+La similaridad coseno se define como:
+
+$$
+\text{CosSim}(x,y)
+=
+\frac{x \cdot y}
+{\|x\| \|y\|}
+$$
+
+donde:
+
+- $x$ y $y$ representan dos embeddings.
+- $\|\cdot\|$ denota la norma euclidiana.
+
+Valores cercanos a 1 indican alta similitud entre las representaciones, mientras que valores cercanos a 0 sugieren independencia y valores negativos indican direcciones opuestas dentro del espacio latente.
+
+La matriz de similaridad obtenida permitió identificar pares de ciudades cuyas representaciones resultan particularmente cercanas.
+
+Los resultados sugieren que SatCLIP logra capturar patrones espaciales relevantes, ya que ciudades pertenecientes a regiones geográficas similares tienden a presentar valores de similaridad más elevados.
+
+## Búsqueda de vecinos más cercanos
+
+Como evaluación adicional se implementó un procedimiento de búsqueda de vecinos más cercanos (*Nearest Neighbors*) utilizando distancia coseno sobre los embeddings generados por SatCLIP.
+
+Para cada ciudad se identificaron las ubicaciones con representaciones más próximas dentro del espacio latente.
+
+Los resultados mostraron una notable coherencia geográfica. Por ejemplo, para la Ciudad de México los vecinos más cercanos corresponden principalmente a ciudades ubicadas en la región centro del país, incluyendo Toluca, Cuernavaca, Puebla y Pachuca.
+
+De manera similar, Monterrey presentó proximidad con ciudades del norte de México, mientras que Mérida mostró relaciones más cercanas con otras ciudades de la Península de Yucatán.
+
+Estos hallazgos sugieren que SatCLIP organiza las ubicaciones dentro de un espacio latente donde la proximidad vectorial refleja, al menos parcialmente, relaciones geográficas reales.
+
+La capacidad de recuperar estructuras espaciales utilizando únicamente coordenadas geográficas constituye evidencia empírica de que los embeddings aprendidos contienen información semántica relevante sobre el territorio.
+
+## Hallazgos preliminares
+
+Los experimentos realizados permiten extraer varias observaciones iniciales sobre el comportamiento de SatCLIP:
+
+1. El modelo genera embeddings de manera eficiente utilizando únicamente coordenadas geográficas.
+
+2. Las representaciones obtenidas poseen dimensionalidad moderada (256 dimensiones), facilitando su integración en modelos posteriores de aprendizaje automático.
+
+3. La reducción de dimensionalidad mediante PCA revela patrones espaciales consistentes entre distintas regiones de México.
+
+4. La similaridad coseno y la búsqueda de vecinos más cercanos muestran evidencia de organización geográfica dentro del espacio latente.
+
+5. SatCLIP constituye un ejemplo funcional de modelo implícito capaz de producir representaciones geoespaciales sin necesidad de consultar imágenes satelitales durante la inferencia.
+
+Estos resultados servirán como punto de partida para futuras comparaciones con modelos explícitos como GeoCLIP, Clay, Prithvi y AlphaEarth Foundations.

@@ -1,0 +1,33 @@
+city,nearest_neighbor,cosine_similarity
+Aguascalientes,Zacatecas,0.9640578498728568
+Mexicali,La Paz,0.4216734497645412
+La Paz,Culiacan,0.4933838252507631
+San Francisco de Campeche,Merida,0.9305322574029344
+Saltillo,Monterrey,0.9773959189129742
+Colima,Tepic,0.8979512603704279
+Tuxtla Gutierrez,Villahermosa,0.8734544863690116
+Chihuahua,Zacatecas,0.7934777535118471
+Ciudad de Mexico,Cuernavaca,0.9887658868030847
+Durango,Zacatecas,0.8859326189534809
+Guanajuato,Queretaro,0.988866636340529
+Chilpancingo,Cuernavaca,0.8685619090317286
+Pachuca,Tlaxcala,0.9817304706163535
+Guadalajara,Morelia,0.9397257591074092
+Toluca,Cuernavaca,0.9928929025705826
+Morelia,Toluca,0.9739079662896888
+Cuernavaca,Toluca,0.9928929025705826
+Tepic,Colima,0.8979512603704279
+Monterrey,Saltillo,0.9773959189129742
+Oaxaca,Chilpancingo,0.8534939237125907
+Puebla,Tlaxcala,0.9970354933317904
+Queretaro,Guanajuato,0.988866636340529
+Chetumal,San Francisco de Campeche,0.8384051252637404
+San Luis Potosi,Zacatecas,0.9435324197562188
+Culiacan,Tepic,0.8090885271466239
+Hermosillo,Chihuahua,0.7474735298963058
+Villahermosa,Tuxtla Gutierrez,0.8734544863690116
+Ciudad Victoria,Monterrey,0.8103658355346766
+Tlaxcala,Puebla,0.9970354933317904
+Xalapa,Tlaxcala,0.7689111409550248
+Merida,San Francisco de Campeche,0.9305322574029344
+Zacatecas,Aguascalientes,0.9640578498728568
