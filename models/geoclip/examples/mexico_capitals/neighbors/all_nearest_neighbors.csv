@@ -1,0 +1,33 @@
+city,nearest_neighbor,cosine_similarity
+Aguascalientes,San Luis Potosi,0.5676452
+Mexicali,Hermosillo,0.43056256
+La Paz,Aguascalientes,0.36965132
+San Francisco de Campeche,Merida,0.5407295
+Saltillo,Monterrey,0.5595323
+Colima,Guadalajara,0.49358207
+Tuxtla Gutierrez,Villahermosa,0.3624574
+Chihuahua,San Luis Potosi,0.4772415
+Ciudad de Mexico,Puebla,0.5769853
+Durango,Zacatecas,0.5294148
+Guanajuato,Queretaro,0.55854094
+Chilpancingo,Tuxtla Gutierrez,0.36089137
+Pachuca,Tlaxcala,0.5849977
+Guadalajara,Ciudad de Mexico,0.5519081
+Toluca,Tlaxcala,0.5387691
+Morelia,Queretaro,0.54551446
+Cuernavaca,Ciudad de Mexico,0.5605336
+Tepic,Guadalajara,0.47108358
+Monterrey,Saltillo,0.5595323
+Oaxaca,Tlaxcala,0.40915358
+Puebla,Tlaxcala,0.76766634
+Queretaro,Guanajuato,0.55854094
+Chetumal,Villahermosa,0.4482691
+San Luis Potosi,Zacatecas,0.5964147
+Culiacan,Aguascalientes,0.4372142
+Hermosillo,Mexicali,0.43056256
+Villahermosa,Chetumal,0.4482691
+Ciudad Victoria,Monterrey,0.5146996
+Tlaxcala,Puebla,0.76766634
+Xalapa,Tlaxcala,0.52238613
+Merida,San Francisco de Campeche,0.5407295
+Zacatecas,San Luis Potosi,0.5964147
