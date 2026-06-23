@@ -772,7 +772,7 @@ En los benchmarks reportados por Google DeepMind, *AlphaEarth* demuestra un dese
 
 Por esta razón, *AlphaEarth Foundations* constituye actualmente uno de los referentes más importantes dentro de la investigación en *Earth Embeddings* y representa el modelo central estudiado durante la presente estancia de investigación.
 
-# Implementación y exploración práctica de SatCLIP
+# SatCLIP
 
 ## Preparación del entorno
 
@@ -894,3 +894,136 @@ Los experimentos realizados permiten extraer varias observaciones iniciales sobr
 5. SatCLIP constituye un ejemplo funcional de modelo implícito capaz de producir representaciones geoespaciales sin necesidad de consultar imágenes satelitales durante la inferencia.
 
 Estos resultados servirán como punto de partida para futuras comparaciones con modelos explícitos como GeoCLIP, Clay, Prithvi y AlphaEarth Foundations.
+
+# GeoCLIP
+
+## Introducción a GeoCLIP
+
+GeoCLIP es un modelo fundacional geoespacial inspirado en CLIP (*Contrastive Language-Image Pretraining*) cuyo objetivo consiste en relacionar imágenes con ubicaciones geográficas dentro de un espacio latente compartido.
+
+A diferencia de SatCLIP, que genera embeddings directamente a partir de coordenadas geográficas, GeoCLIP incorpora información visual mediante un *encoder* de imágenes basado en CLIP.
+
+Conceptualmente, GeoCLIP aprende una función capaz de asociar imágenes observadas sobre la superficie terrestre con representaciones geográficas latentes:
+
+$$
+\text{Imagen} \rightarrow \text{Embedding geográfico}
+$$
+
+Durante el entrenamiento, imágenes y coordenadas correspondientes a una misma ubicación son proyectadas hacia un espacio común, permitiendo que representaciones visuales y geográficas resulten comparables entre sí.
+
+Esta característica convierte a GeoCLIP en un modelo híbrido que combina visión computacional y representación geoespacial.
+
+## Preparación del entorno
+
+Con el objetivo de explorar el funcionamiento práctico de GeoCLIP se realizó la instalación local del modelo utilizando el repositorio oficial disponible públicamente.
+
+El proceso incluyó:
+
+- Creación de un entorno virtual independiente mediante Conda.
+- Instalación de PyTorch y dependencias requeridas.
+- Descarga automática de pesos preentrenados desde Hugging Face.
+- Configuración del pipeline de inferencia para imágenes.
+- Validación mediante pruebas de extracción de embeddings.
+
+Una vez completada la instalación, fue posible generar representaciones geoespaciales directamente a partir de imágenes urbanas correspondientes a distintas ciudades mexicanas.
+
+
+## Extracción de embeddings visuales
+
+A diferencia de SatCLIP, GeoCLIP requiere imágenes como entrada durante la etapa de inferencia.
+
+Formalmente, el modelo implementa una función del tipo:
+
+$$
+\text{Imagen} \rightarrow z
+$$
+
+donde:
+
+- Imagen corresponde a la observación visual de una ubicación geográfica.
+- $z$ representa el embedding generado por el modelo.
+
+Para validar este comportamiento se utilizaron imágenes representativas de distintas ciudades mexicanas.
+
+Los resultados confirmaron que cada imagen es transformada en un vector de 512 dimensiones:
+
+$$
+z \in \mathbb{R}^{512}
+$$
+
+Estos vectores constituyen representaciones latentes aprendidas durante el entrenamiento del modelo y buscan capturar características visuales relevantes relacionadas con la ubicación observada.
+
+
+## Visualización mediante Análisis de Componentes Principales (PCA)
+
+Debido a que los embeddings generados por GeoCLIP poseen 512 dimensiones, resulta imposible visualizarlos directamente.
+
+Para facilitar su interpretación se utilizó Análisis de Componentes Principales (*Principal Component Analysis*, PCA), una técnica de reducción de dimensionalidad que proyecta los datos sobre un espacio de menor dimensión conservando la mayor cantidad posible de variabilidad.
+
+La proyección se realizó sobre las dos primeras componentes principales:
+
+$$
+\mathbb{R}^{512} \rightarrow \mathbb{R}^{2}
+$$
+
+permitiendo representar cada ciudad como un punto dentro de un plano bidimensional.
+
+La Figura X muestra la distribución obtenida para las ciudades analizadas.
+
+```{r fig-geoclip-pca, echo=FALSE, cho=FALSE, out.width="75%", fig.align="center", fig.cap="Proyección PCA de los embeddings generados por GeoCLIP para distintas ciudades mexicanas."}
+knitr::include_graphics("figures/geoclip_pca.png")
+```
+
+Las dos primeras componentes principales explican aproximadamente el 65.7% de la variabilidad observada en los embeddings:
+
+$$
+40.7\% + 25.0\% = 65.7\%
+$$
+
+Por lo tanto, la visualización bidimensional conserva una proporción importante de la estructura original del espacio latente.
+
+Los resultados muestran que GeoCLIP logra producir representaciones diferenciadas para distintas ciudades a partir de información visual.
+
+Por ejemplo, Mérida aparece claramente separada del resto de las observaciones dentro del espacio latente, mientras que Oaxaca y Guadalajara ocupan regiones distintas de la proyección.
+
+Aunque el número de observaciones analizadas es reducido, la separación observada constituye evidencia preliminar de que el modelo captura diferencias visuales relevantes asociadas a distintas ubicaciones geográficas.
+
+
+## Comparación conceptual con SatCLIP
+
+Los experimentos realizados permiten observar diferencias importantes entre SatCLIP y GeoCLIP.
+
+SatCLIP genera embeddings utilizando exclusivamente coordenadas geográficas:
+
+$$
+(lat, lon) \rightarrow z
+$$
+
+En contraste, GeoCLIP utiliza información visual:
+
+$$
+\text{Imagen} \rightarrow z
+$$
+
+Como consecuencia, SatCLIP puede generar representaciones para cualquier coordenada del planeta sin necesidad de imágenes, mientras que GeoCLIP depende directamente del contenido visual observado.
+
+Por otro lado, GeoCLIP posee la capacidad de capturar detalles específicos presentes en una imagen individual, incluyendo arquitectura urbana, vegetación, infraestructura y características visuales particulares de cada región.
+
+Estas diferencias ilustran claramente la distinción entre modelos implícitos y modelos explícitos discutida previamente en el marco teórico.
+
+
+## Hallazgos preliminares
+
+Los experimentos realizados permiten extraer varias observaciones iniciales sobre GeoCLIP:
+
+1. El modelo genera embeddings geoespaciales a partir de imágenes individuales.
+
+2. Las representaciones obtenidas poseen dimensionalidad de 512 componentes.
+
+3. La reducción mediante PCA muestra evidencia de separación entre distintas ciudades.
+
+4. El modelo captura información visual relevante asociada con características geográficas observables.
+
+5. GeoCLIP constituye un ejemplo funcional de modelo explícito basado en visión computacional.
+
+Estos resultados complementan los hallazgos obtenidos previamente con SatCLIP y servirán como punto de partida para futuras comparaciones con otros modelos fundacionales geoespaciales como Clay, Prithvi y AlphaEarth Foundations.
