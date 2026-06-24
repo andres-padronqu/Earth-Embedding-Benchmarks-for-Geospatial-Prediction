@@ -1027,3 +1027,110 @@ Los experimentos realizados permiten extraer varias observaciones iniciales sobr
 5. GeoCLIP constituye un ejemplo funcional de modelo explícito basado en visión computacional.
 
 Estos resultados complementan los hallazgos obtenidos previamente con SatCLIP y servirán como punto de partida para futuras comparaciones con otros modelos fundacionales geoespaciales como Clay, Prithvi y AlphaEarth Foundations.
+
+# Clay
+
+## Introducción a Clay
+
+Clay es un modelo fundacional geoespacial diseñado para generar representaciones vectoriales a partir de imágenes satelitales multiespectrales. A diferencia de modelos implícitos como SatCLIP, Clay pertenece a la categoría de modelos explícitos, ya que requiere observaciones de la superficie terrestre durante la etapa de inferencia.
+
+Conceptualmente, el flujo de trabajo puede representarse como:
+
+$$
+\text{Imagen satelital} \rightarrow \text{Clay} \rightarrow \text{Embedding}
+$$
+
+En este experimento se utilizó Clay como modelo de aprendizaje para construir un pipeline completo de extracción, integración y análisis de embeddings geoespaciales.
+
+## Preparación del experimento
+
+Se seleccionaron cinco ciudades mexicanas:
+
+- Ciudad de México
+- Guadalajara
+- Monterrey
+- Mérida
+- Oaxaca
+
+Para cada ciudad se generó un embedding utilizando Clay. Los resultados confirmaron que el modelo produce vectores de 1024 dimensiones:
+
+$$
+z \in \mathbb{R}^{1024}
+$$
+
+El conjunto generado contiene cinco observaciones y 1027 columnas: tres variables de referencia (`city`, `lat`, `lon`) y 1024 dimensiones del embedding.
+
+## Integración con Google Earth Engine
+
+Para interpretar parcialmente la información capturada por Clay, se extrajeron variables espectrales desde Sentinel-2 mediante Google Earth Engine. Se utilizó un buffer de 10 km alrededor de cada ciudad y se calcularon los siguientes índices:
+
+$$
+NDVI = \frac{NIR - RED}{NIR + RED}
+$$
+
+$$
+NDWI = \frac{GREEN - NIR}{GREEN + NIR}
+$$
+
+$$
+NDBI = \frac{SWIR - NIR}{SWIR + NIR}
+$$
+
+Además, se conservaron bandas espectrales relevantes de Sentinel-2: B2, B3, B4, B8, B11 y B12.
+
+## Resultados espectrales
+
+```{r clay-sentinel-table, echo=FALSE}
+knitr::kable(
+  data.frame(
+    Ciudad = c("CDMX", "Monterrey", "Guadalajara", "Mérida", "Oaxaca"),
+    NDVI = c(0.174838, 0.264612, 0.184947, 0.379553, 0.351577),
+    NDWI = c(-0.252054, -0.283568, -0.263835, -0.387204, -0.421275),
+    NDBI = c(0.025924, -0.021663, 0.041008, 0.017411, 0.074445)
+  ),
+  digits = 3,
+  caption = "Índices espectrales derivados de Sentinel-2 para cinco ciudades mexicanas."
+)
+```
+
+Los valores de NDVI muestran que Mérida y Oaxaca presentan mayor cobertura vegetal relativa, mientras que CDMX y Guadalajara muestran valores menores, consistentes con una mayor presencia urbana dentro del buffer analizado.
+
+## Reducción de dimensionalidad mediante PCA
+
+Debido a que los embeddings generados por Clay poseen 1024 dimensiones, se utilizó Análisis de Componentes Principales para proyectar las representaciones en dos dimensiones:
+
+$$
+\mathbb{R}^{1024} \rightarrow \mathbb{R}^{2}
+$$
+
+Las dos primeras componentes principales explican aproximadamente:
+
+$$
+60.1\% + 34.8\% = 94.9\%
+$$
+
+de la variabilidad observada.
+
+```{r clay-pca-figure, echo=FALSE, out.width="85%", fig.cap="Proyección PCA de los embeddings generados por Clay para cinco ciudades mexicanas."}
+knitr::include_graphics("figures/clay_embeddings_pca.png")
+```
+
+## Interpretación de resultados
+
+La proyección PCA muestra una separación clara entre las ciudades analizadas. Mérida y Oaxaca, que presentan los valores más altos de NDVI, aparecen en la parte superior del espacio proyectado. Esto sugiere que los embeddings de Clay capturan información relacionada con cobertura vegetal y características ambientales observables desde Sentinel-2.
+
+Por otro lado, CDMX y Guadalajara se ubican hacia el lado derecho de la proyección, ambas con valores relativamente bajos de NDVI. Monterrey aparece aislada en la parte inferior izquierda, lo cual puede reflejar su combinación particular de urbanización, topografía montañosa y condiciones semiáridas.
+
+Aunque el número de observaciones es reducido, el experimento muestra que las representaciones generadas por Clay no son vectores arbitrarios, sino que contienen información latente consistente con variables espectrales interpretables.
+
+## Hallazgos preliminares
+
+Los principales hallazgos de esta prueba son:
+
+1. Clay genera embeddings explícitos a partir de imágenes satelitales.
+2. Cada ubicación queda representada por un vector de 1024 dimensiones.
+3. Google Earth Engine permitió extraer variables espectrales interpretables para comparar contra los embeddings.
+4. El PCA mostró una estructura latente coherente con diferencias ambientales entre ciudades.
+5. El experimento sirve como validación inicial del pipeline antes de avanzar hacia modelos más avanzados como Prithvi y AlphaEarth Foundations.
+
+En conclusión, Clay fue utilizado como un modelo de aprendizaje y validación metodológica. El objetivo principal no fue realizar una evaluación definitiva del modelo, sino construir un flujo reproducible que conectara imágenes satelitales, embeddings, índices espectrales y análisis exploratorio. Este pipeline servirá como base para comparar posteriormente otros modelos fundacionales geoespaciales.
