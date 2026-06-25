@@ -1134,3 +1134,263 @@ Los principales hallazgos de esta prueba son:
 5. El experimento sirve como validación inicial del pipeline antes de avanzar hacia modelos más avanzados como Prithvi y AlphaEarth Foundations.
 
 En conclusión, Clay fue utilizado como un modelo de aprendizaje y validación metodológica. El objetivo principal no fue realizar una evaluación definitiva del modelo, sino construir un flujo reproducible que conectara imágenes satelitales, embeddings, índices espectrales y análisis exploratorio. Este pipeline servirá como base para comparar posteriormente otros modelos fundacionales geoespaciales.
+
+# 10 Prithvi
+
+## Introducción
+
+Después de evaluar modelos fundacionales como SatCLIP, GeoCLIP y Clay, el siguiente experimento consistió en analizar **Prithvi**, un *foundation model* desarrollado por IBM y la NASA para tareas de observación de la Tierra.
+
+A diferencia de Clay, cuyo objetivo principal consiste en generar representaciones latentes directamente utilizables (*embeddings*), Prithvi fue diseñado como un **backbone basado en Vision Transformers** para resolver tareas supervisadas como segmentación semántica, clasificación y detección de cambios en imágenes satelitales.
+
+Su arquitectura fue entrenada utilizando imágenes multiespectrales provenientes principalmente de **Harmonized Landsat Sentinel-2 (HLS)**, aprendiendo representaciones espaciales y temporales que posteriormente pueden reutilizarse mediante *transfer learning* en múltiples aplicaciones relacionadas con percepción remota.
+
+Aunque el repositorio oficial incorpora módulos adicionales de OpenMMLab, tales como **MMCV** y **MMSegmentation**, el objetivo de este proyecto no consiste en realizar segmentación de imágenes. En cambio, únicamente se utiliza el componente central del modelo, denominado **Temporal Vision Transformer Encoder**, para obtener una representación vectorial de cada imagen satelital.
+
+El propósito de este experimento consiste en evaluar la capacidad de Prithvi como extractor de *embeddings* geoespaciales y comparar posteriormente dichas representaciones con las obtenidas mediante Clay y AlphaEarth Foundations.
+
+El flujo general implementado durante este experimento se resume en la Figura \@ref(fig:prithvi-pipeline).
+
+```text
+Google Earth Engine
+        ↓
+Sentinel-2
+        ↓
+GeoTIFF
+        ↓
+Preprocessing
+        ↓
+TemporalViTEncoder
+        ↓
+CLS Token
+        ↓
+1024-dimensional embedding
+```
+
+El resultado final es un único vector de dimensión 1024 que resume la información espectral y espacial contenida en cada parche satelital.
+
+## Preparación del experimento
+
+El primer paso consistió en obtener imágenes satelitales compatibles con la arquitectura de Prithvi.
+
+Para ello se utilizó **Google Earth Engine**, aprovechando la colección **COPERNICUS/S2_SR_HARMONIZED**, la cual proporciona imágenes Sentinel-2 corregidas atmosféricamente y armonizadas para facilitar su utilización en aplicaciones de aprendizaje automático.
+
+Se seleccionaron cinco ciudades mexicanas representativas de diferentes regiones del país:
+
+- Ciudad de México
+- Guadalajara
+- Monterrey
+- Mérida
+- Oaxaca
+
+Cada ciudad fue representada mediante un único parche satelital centrado en sus coordenadas geográficas.
+
+Con el propósito de reducir la presencia de nubes, únicamente se consideraron imágenes correspondientes al año 2025 cuyo porcentaje de nubosidad fuera inferior al 20 %. Posteriormente se calculó la mediana temporal de la colección, obteniendo una imagen representativa para cada ubicación.
+
+Únicamente se conservaron las seis bandas espectrales utilizadas por Prithvi:
+
+| Banda | Descripción |
+|:------:|-------------|
+| B2 | Blue |
+| B3 | Green |
+| B4 | Red |
+| B8 | Near Infrared (NIR) |
+| B11 | Short Wave Infrared 1 (SWIR1) |
+| B12 | Short Wave Infrared 2 (SWIR2) |
+
+Estas bandas contienen información relacionada con vegetación, humedad del suelo, cobertura urbana y características físicas de la superficie terrestre, constituyendo una representación multiespectral adecuada para modelos fundacionales de observación terrestre.
+
+Cada imagen fue exportada desde Google Earth Engine en formato **GeoTIFF**, conservando las seis bandas originales.
+
+Como resultado se obtuvieron cinco archivos:
+
+```text
+cdmx_prithvi_patch.tif
+guadalajara_prithvi_patch.tif
+monterrey_prithvi_patch.tif
+merida_prithvi_patch.tif
+oaxaca_prithvi_patch.tif
+```
+
+Estos archivos constituyen la entrada del pipeline desarrollado en Python.
+
+## Preprocesamiento de las imágenes
+
+Una vez descargados los parches satelitales, cada archivo GeoTIFF fue cargado utilizando la biblioteca **rasterio**, la cual permite leer imágenes geoespaciales preservando tanto su estructura multibanda como la información espacial asociada.
+
+Inicialmente, las imágenes presentan el siguiente formato:
+
+```text
+(bands, height, width)
+```
+
+Por ejemplo, para la Ciudad de México se obtuvo inicialmente:
+
+```text
+(6, 225, 237)
+```
+
+Sin embargo, la arquitectura de Prithvi requiere como entrada imágenes con resolución espacial fija de **224 × 224 píxeles**.
+
+Por esta razón, cada imagen fue redimensionada mediante interpolación bilineal utilizando PyTorch, preservando el contenido espectral mientras se ajustaban sus dimensiones espaciales.
+
+Posteriormente, los valores de reflectancia fueron normalizados dividiendo cada píxel entre 10000, siguiendo el procedimiento habitual empleado para imágenes Sentinel-2 Level-2A.
+
+Finalmente, el tensor fue reorganizado al formato esperado por el encoder:
+
+```text
+(batch, channels, temporal, height, width)
+```
+
+obteniéndose
+
+```text
+(1, 6, 1, 224, 224)
+```
+
+donde:
+
+- **batch = 1**, ya que cada imagen se procesa individualmente;
+- **channels = 6**, correspondientes a las bandas espectrales seleccionadas;
+- **temporal = 1**, puesto que únicamente se utiliza una observación temporal;
+- **224 × 224**, tamaño requerido por el modelo.
+
+Este preprocesamiento garantiza que las imágenes sean compatibles con la implementación original del Temporal Vision Transformer Encoder.
+
+## Extracción de embeddings mediante el Temporal Vision Transformer
+
+Una vez preparado el tensor de entrada, cada imagen fue procesada utilizando el **Temporal Vision Transformer Encoder** implementado en Prithvi.
+
+Internamente, el modelo divide la imagen en pequeños parches (*patches*) de tamaño fijo, proyectando cada uno de ellos hacia un espacio de dimensión 1024 mediante una capa convolucional tridimensional.
+
+Posteriormente, a cada token se le incorpora un **embedding posicional tridimensional**, permitiendo que el Transformer conserve información acerca de la posición espacial y temporal de cada parche.
+
+Después de agregar el token especial **CLS**, la secuencia completa es procesada mediante 24 bloques Transformer compuestos por mecanismos de *multi-head self-attention* y redes neuronales completamente conectadas (*feed-forward networks*).
+
+Como resultado, el encoder produce un tensor con dimensiones:
+
+```text
+(1, 197, 1024)
+```
+
+donde:
+
+- un token corresponde al CLS;
+- los 196 restantes representan los parches de la imagen;
+- cada token posee una representación de 1024 dimensiones.
+
+Siguiendo la práctica habitual en Vision Transformers, el embedding global de la imagen se obtuvo utilizando únicamente el token CLS.
+
+En consecuencia, cada ciudad quedó representada mediante un único vector
+
+$$
+z_i \in \mathbb{R}^{1024},
+$$
+
+el cual resume la información espectral y espacial contenida en el parche satelital correspondiente.
+
+Estos embeddings fueron almacenados individualmente en formato NumPy y posteriormente consolidados en un único archivo CSV para facilitar su análisis y comparación.
+
+```text
+outputs/
+
+├── cdmx_prithvi_embedding.npy
+├── guadalajara_prithvi_embedding.npy
+├── monterrey_prithvi_embedding.npy
+├── merida_prithvi_embedding.npy
+├── oaxaca_prithvi_embedding.npy
+└── prithvi_mexico_embeddings.csv
+```
+
+El archivo consolidado contiene una fila por ciudad y un total de **1024 características**, correspondientes a las dimensiones del embedding generado por Prithvi.
+
+## Visualización mediante PCA
+
+Una vez obtenidos los *embeddings* de las cinco ciudades, se realizó una exploración preliminar de su estructura mediante **Principal Component Analysis (PCA)**.
+
+Dado que cada ciudad queda representada por un vector de 1024 dimensiones, resulta imposible visualizar directamente las relaciones entre ellas. PCA permite proyectar estos vectores sobre un espacio bidimensional preservando, en la medida de lo posible, la variabilidad presente en los datos.
+
+La Figura siguiente muestra la proyección de los cinco *embeddings* sobre las dos primeras componentes principales.
+
+```{r prithvi-pca, echo=FALSE, fig.cap="PCA projection of the Prithvi embeddings obtained for the five selected Mexican cities.", out.width="80%"}
+knitr::include_graphics("figures/prithvi_embeddings.png")
+```
+
+A pesar del reducido número de observaciones, la proyección muestra que Prithvi genera representaciones diferenciadas para cada ciudad.
+
+Puede observarse que Ciudad de México y Oaxaca aparecen ubicadas hacia la parte derecha del espacio latente, mientras que Mérida se encuentra claramente desplazada hacia la izquierda sobre la primera componente principal. Guadalajara y Monterrey presentan posiciones relativamente cercanas sobre la primera componente, aunque permanecen separadas sobre la segunda.
+
+Es importante destacar que las coordenadas obtenidas mediante PCA no poseen una interpretación física directa. Su utilidad radica en ofrecer una representación visual del espacio latente aprendido por el modelo y facilitar la identificación de agrupamientos o diferencias entre los *embeddings*.
+
+En conjunto, estos resultados sugieren que el encoder de Prithvi es capaz de capturar características espaciales y espectrales propias de cada región, produciendo representaciones distintas incluso cuando todas las imágenes provienen del mismo sensor satelital.
+
+## Similaridad coseno entre embeddings
+
+Además de la visualización mediante PCA, se calculó la **similaridad coseno** entre todos los pares de *embeddings* generados por Prithvi.
+
+Esta métrica cuantifica el grado de similitud entre dos vectores a partir del ángulo que forman en el espacio de características. Valores cercanos a uno indican que ambos vectores poseen orientaciones muy similares, mientras que valores menores reflejan representaciones más diferenciadas.
+
+La matriz de similaridad obtenida se presenta en la siguiente figura.
+
+```{r prithvi-cosine, echo=FALSE, fig.cap="Cosine similarity matrix between the Prithvi embeddings.", out.width="75%"}
+knitr::include_graphics("figures/prithvi_cosine.png")
+```
+
+Los resultados muestran valores elevados para todas las comparaciones, con similitudes superiores a **0.97**.
+
+Este comportamiento era esperado debido a que todas las imágenes fueron obtenidas mediante Sentinel-2, utilizando exactamente las mismas bandas espectrales y procesadas por el mismo modelo fundacional.
+
+Sin embargo, las similitudes no son idénticas. Existen pequeñas diferencias que indican que Prithvi captura información específica de cada ciudad.
+
+Por ejemplo, Guadalajara y Monterrey presentan una similitud particularmente alta, lo que sugiere que sus representaciones latentes comparten características espectrales semejantes. En contraste, Mérida presenta los valores de similitud más bajos respecto a las demás ciudades, indicando que el modelo identifica patrones diferentes dentro de su imagen satelital.
+
+Aunque estas diferencias son relativamente pequeñas, constituyen evidencia de que el encoder no genera representaciones constantes, sino que responde a las características propias de cada parche observado.
+
+## Interpretación de los resultados
+
+Los experimentos realizados permiten comprobar que Prithvi puede utilizarse exitosamente como un extractor de *embeddings* geoespaciales, aun cuando el modelo fue concebido originalmente como un *backbone* para tareas supervisadas de percepción remota.
+
+El procedimiento desarrollado durante esta estancia permitió aislar el **Temporal Vision Transformer Encoder** del resto de la arquitectura, evitando la necesidad de utilizar los módulos de segmentación incluidos en el repositorio oficial.
+
+A partir de un único parche Sentinel-2 fue posible obtener un vector de 1024 dimensiones que resume la información espectral y espacial contenida en la imagen.
+
+La reducción mediante PCA mostró que las distintas ciudades ocupan posiciones diferentes dentro del espacio latente, mientras que el análisis mediante similaridad coseno confirmó que, aunque todas las representaciones conservan una estructura común, existen diferencias suficientes para distinguir cada ubicación.
+
+Estos resultados demuestran que los modelos fundacionales entrenados para observación de la Tierra contienen información útil más allá de las tareas específicas para las cuales fueron desarrollados originalmente.
+
+En particular, el token CLS generado por Prithvi constituye una representación compacta que puede emplearse posteriormente como entrada para modelos de clasificación, regresión o agrupamiento sin necesidad de trabajar directamente sobre las imágenes satelitales originales.
+
+
+## Comparación con Clay
+
+El experimento desarrollado con Prithvi complementa el análisis realizado previamente utilizando Clay.
+
+Aunque ambos modelos producen representaciones de **1024 dimensiones**, existen diferencias importantes tanto en su diseño como en su forma de utilización.
+
+Clay fue concebido desde su origen como un modelo fundacional orientado a producir *embeddings* geoespaciales listos para utilizarse en tareas posteriores. En consecuencia, el proceso de extracción resulta relativamente directo.
+
+Por el contrario, Prithvi fue diseñado como un encoder para tareas supervisadas de observación de la Tierra. Para utilizarlo como extractor de representaciones fue necesario aislar manualmente el encoder y emplear el token CLS como descriptor global de la imagen.
+
+Esta diferencia hace que la implementación de Prithvi requiera un mayor nivel de intervención por parte del usuario, aunque ofrece una arquitectura basada completamente en Vision Transformers entrenada específicamente sobre datos de percepción remota.
+
+La comparación general entre ambos modelos se resume en la Tabla siguiente.
+
+| Modelo | Entrada | Arquitectura | Representación utilizada | Dimensión |
+|:-------|:---------|:-------------|:-------------------------|:---------:|
+| Clay | Imagen satelital | Foundation Model geoespacial | Embedding directo | 1024 |
+| Prithvi | Sentinel-2 | Temporal Vision Transformer | Token CLS | 1024 |
+
+En ambos casos se obtienen representaciones latentes con la misma dimensionalidad; sin embargo, el mecanismo mediante el cual dichas representaciones son generadas difiere considerablemente.
+
+
+## Conclusiones
+
+En este capítulo se implementó exitosamente un pipeline completo para la extracción de *embeddings* geoespaciales utilizando el modelo fundacional Prithvi.
+
+El experimento comenzó con la exportación de imágenes Sentinel-2 desde Google Earth Engine, continuó con el preprocesamiento requerido por el encoder y finalizó con la obtención de un vector de 1024 dimensiones para cada una de las cinco ciudades seleccionadas.
+
+Los análisis exploratorios realizados mediante PCA y similaridad coseno muestran que el modelo produce representaciones consistentes y diferenciadas, capaces de capturar información espectral y espacial relevante de cada parche satelital.
+
+Más allá de su aplicación original en tareas de segmentación, Prithvi puede utilizarse como un extractor general de representaciones latentes, proporcionando *embeddings* compactos que pueden servir como entrada para modelos posteriores de aprendizaje automático.
+
+Finalmente, los resultados obtenidos constituyen una referencia importante para el siguiente capítulo, donde se analizará **AlphaEarth Foundations**, un modelo fundacional más reciente que incorpora aprendizaje multimodal y fue diseñado específicamente para generar representaciones geoespaciales unificadas a escala global.
