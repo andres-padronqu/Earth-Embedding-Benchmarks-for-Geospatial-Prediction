@@ -1394,3 +1394,140 @@ Los análisis exploratorios realizados mediante PCA y similaridad coseno muestra
 Más allá de su aplicación original en tareas de segmentación, Prithvi puede utilizarse como un extractor general de representaciones latentes, proporcionando *embeddings* compactos que pueden servir como entrada para modelos posteriores de aprendizaje automático.
 
 Finalmente, los resultados obtenidos constituyen una referencia importante para el siguiente capítulo, donde se analizará **AlphaEarth Foundations**, un modelo fundacional más reciente que incorpora aprendizaje multimodal y fue diseñado específicamente para generar representaciones geoespaciales unificadas a escala global.
+
+
+# AlphaEarth Foundations
+
+## Introducción
+
+En este capítulo se presenta **AlphaEarth Foundations**, el modelo fundacional desarrollado por Google DeepMind para la generación de *Earth Embeddings* multimodales. A diferencia de modelos previamente analizados como SatCLIP, GeoCLIP, Clay y Prithvi, AlphaEarth fue diseñado específicamente para producir representaciones geoespaciales compactas capaces de integrar información proveniente de múltiples sensores y diferentes instantes temporales.
+
+Uno de los principales aportes de AlphaEarth consiste en la construcción de los denominados *Space-Time-Precision (STP) Embeddings*, representaciones vectoriales de únicamente 64 dimensiones que condensan información espacial, temporal y espectral de una ubicación geográfica. Estas representaciones permiten resumir grandes volúmenes de información de observación terrestre en vectores compactos que posteriormente pueden utilizarse como variables de entrada para modelos de aprendizaje automático.
+
+Otra ventaja importante del modelo es que sus embeddings se encuentran disponibles públicamente mediante Google Earth Engine, permitiendo consultar representaciones previamente generadas sin necesidad de entrenar el modelo desde cero. Esto facilita su utilización en investigaciones relacionadas con análisis geoespacial, monitoreo ambiental, variables socioeconómicas y tareas de predicción territorial.
+
+El objetivo de esta sección consiste en construir un pipeline reproducible para extraer *Earth Embeddings* correspondientes a las 32 entidades federativas de México, analizar su estructura mediante técnicas de reducción de dimensionalidad e interpretar los patrones espaciales presentes en el espacio latente aprendido por el modelo.
+
+## Integración con Google Earth Engine
+
+Debido a que AlphaEarth Foundations se encuentra integrado dentro del catálogo oficial de Google Earth Engine, fue posible realizar todo el proceso de extracción utilizando la API proporcionada por esta plataforma.
+
+Inicialmente se cargó la colección oficial de embeddings anuales:
+
+```javascript
+GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL
+```
+
+Posteriormente se obtuvieron las geometrías correspondientes a las 32 entidades federativas de México utilizando el conjunto de datos administrativo **FAO/GAUL/2015**. Para cada estado se seleccionaron únicamente las imágenes de AlphaEarth que intersectaban su geometría y se calculó un único embedding representativo mediante una reducción espacial utilizando el promedio (*mean reducer*).
+
+El flujo general implementado puede resumirse de la siguiente manera:
+
+```text
+Estados de México
+        ↓
+Google Earth Engine
+        ↓
+Colección AlphaEarth Annual
+        ↓
+Selección de imágenes por estado
+        ↓
+Reducción espacial (Mean)
+        ↓
+Embedding de 64 dimensiones
+```
+
+Este procedimiento permitió obtener una representación vectorial para cada entidad federativa sin necesidad de descargar imágenes satelitales ni ejecutar procesos de entrenamiento local.
+
+## Extracción de Earth Embeddings
+
+Una vez configurado el entorno de trabajo, se realizó la extracción de los embeddings para cada una de las 32 entidades federativas.
+
+Para cada estado se siguió el siguiente procedimiento:
+
+- Se obtuvo la geometría correspondiente al estado.
+- Se filtraron únicamente las imágenes de AlphaEarth que intersectaban dicha geometría.
+- Las imágenes disponibles se combinaron mediante `mosaic()`.
+- Sobre la geometría estatal se aplicó `reduceRegion()` utilizando el promedio como estadístico de agregación.
+- Finalmente, el vector obtenido fue almacenado junto con el nombre del estado.
+
+Formalmente, el procedimiento implementa una función del tipo
+
+$$
+f(\text{Estado}) = z_i
+$$
+
+donde
+
+$$
+z_i \in \mathbb{R}^{64}
+$$
+
+representa el embedding asociado al estado \(i\).
+
+Cada entidad federativa quedó representada mediante un único vector de 64 dimensiones, confirmando que AlphaEarth utiliza representaciones considerablemente más compactas que modelos previamente estudiados como Clay y Prithvi, cuyos embeddings poseen 1024 dimensiones.
+
+Finalmente, todos los vectores fueron exportados desde Google Earth Engine hacia un archivo CSV para su análisis posterior utilizando Python.
+
+## Exploración del conjunto de datos
+
+Una vez exportados los embeddings, el archivo fue cargado en Python utilizando la biblioteca **Pandas** para realizar un análisis exploratorio inicial.
+
+El conjunto de datos contiene una observación para cada una de las 32 entidades federativas de México y un total de 64 variables numéricas correspondientes a las dimensiones del embedding generado por AlphaEarth, además del nombre de cada estado.
+
+Durante esta etapa se verificó la estructura del conjunto de datos, los tipos de variables y la presencia de valores faltantes.
+
+Los resultados mostraron que el conjunto de datos se encontraba completamente limpio, sin registros incompletos ni valores faltantes, por lo que no fue necesario realizar procesos adicionales de limpieza antes del análisis.
+
+Esta estructura facilita la utilización de los embeddings como variables de entrada para modelos estadísticos y algoritmos de aprendizaje automático.
+
+## Reducción de dimensionalidad mediante PCA
+
+Debido a que cada entidad federativa queda representada mediante un vector de 64 dimensiones, resulta imposible visualizar directamente las relaciones existentes entre los diferentes embeddings.
+
+Con el objetivo de explorar la estructura del espacio latente aprendido por AlphaEarth se aplicó la técnica de **Análisis de Componentes Principales (Principal Component Analysis, PCA)**, la cual permite proyectar datos de alta dimensionalidad sobre un espacio bidimensional preservando la mayor cantidad posible de variabilidad.
+
+Matemáticamente, la transformación puede representarse como
+
+$$
+\mathbb{R}^{64} \longrightarrow \mathbb{R}^{2}
+$$
+
+obteniendo dos componentes principales que permiten visualizar la similitud existente entre los estados.
+
+```{r, echo=FALSE, fig.align="center", out.width="90%"}
+knitr::include_graphics("figures/alphaearth_mexico_states_pca.png")
+```
+
+**Figura X.** Proyección mediante PCA de los *Earth Embeddings* obtenidos para las 32 entidades federativas de México. Cada punto representa un estado y su posición refleja la similitud entre sus representaciones latentes aprendidas por AlphaEarth.
+
+## Interpretación de resultados
+
+La proyección obtenida mediante PCA revela que AlphaEarth organiza las entidades federativas dentro de un espacio latente con una estructura geográfica coherente.
+
+Puede observarse que los estados pertenecientes a la Península de Yucatán, como Campeche, Yucatán y Quintana Roo, aparecen agrupados dentro de la misma región del espacio proyectado, indicando que el modelo identifica características ambientales y territoriales similares entre ellos.
+
+De forma similar, diversos estados del centro del país presentan representaciones relativamente cercanas entre sí, mientras que entidades como Baja California, Baja California Sur, Sonora, Chihuahua y Coahuila aparecen claramente separadas del resto, reflejando las diferencias existentes entre los ecosistemas áridos del norte y las regiones tropicales del sureste.
+
+Aunque el PCA reduce la dimensionalidad de 64 variables a únicamente dos componentes principales, la visualización conserva patrones espaciales relevantes y constituye una primera aproximación para comprender la organización interna del espacio latente generado por AlphaEarth.
+
+## Comparación con modelos anteriores
+
+Los experimentos realizados durante la estancia permiten comparar AlphaEarth con los modelos fundacionales estudiados previamente.
+
+A diferencia de SatCLIP, que genera representaciones únicamente a partir de coordenadas geográficas, AlphaEarth incorpora información observada directamente por sensores remotos y múltiples fuentes de datos.
+
+En comparación con GeoCLIP, que trabaja principalmente con imágenes individuales, AlphaEarth integra información temporal y multimodal dentro de una única representación.
+
+Respecto a Clay y Prithvi, AlphaEarth produce embeddings considerablemente más compactos, reduciendo la dimensionalidad de 1024 a únicamente 64 componentes sin perder capacidad descriptiva.
+
+Además, la disponibilidad del modelo dentro de Google Earth Engine simplifica significativamente el proceso de extracción, eliminando la necesidad de descargar imágenes satelitales, realizar preprocesamiento o ejecutar modelos localmente.
+
+## Hallazgos preliminares
+
+Los principales resultados obtenidos durante este experimento pueden resumirse en los siguientes puntos:
+
+- Fue posible generar *Earth Embeddings* para las 32 entidades federativas de México utilizando exclusivamente Google Earth Engine.
+- Cada estado quedó representado mediante un vector compacto de 64 dimensiones.
+- El conjunto de datos exportado no presentó valores faltantes y pudo integrarse directamente en un flujo de análisis con Python.
+- La reducción mediante PCA permitió visualizar agrupamientos espaciales consistentes entre distintas regiones del país.
+- El pipeline desarrollado constituye una metodología reproducible para futuras aplicaciones de AlphaEarth en problemas de clasificación, regresión y predicción geoespacial.
